@@ -52,7 +52,18 @@ except redis.ConnectionError:
     logger.warning("Redis not available, using in-memory storage")
     r = None
 
-# Enhanced scheme database (same as your original)
+# Conversation steps
+STEPS = {
+    "WELCOME": "0",
+    "MAIN_MENU": "1",
+    "ELIGIBILITY_AGE": "2",
+    "ELIGIBILITY_INCOME": "3",
+    "ELIGIBILITY_OCCUPATION": "4",
+    "ELIGIBILITY_LOCATION": "5",
+    "SCHEME_RESULTS": "6"
+}
+
+# Enhanced scheme database
 scheme_database = {
     "PM-KISAN": {
         "category": "Agriculture",
@@ -62,7 +73,14 @@ scheme_database = {
         "deadline": "Ongoing",
         "link": "https://pmkisan.gov.in"
     },
-    # ... [Include all other schemes exactly as in your original]
+    "PM-AWAS-YOJANA": {
+        "category": "Housing",
+        "steps": "1. Contact local municipal office\n2. Submit proof of residence and income\n3. Get approval and subsidy",
+        "eligibility": {"min_age": 21, "occupation": None, "income_max": 180000},
+        "benefits": "Housing subsidy up to ₹2.67 lakh",
+        "deadline": "31-12-2024",
+        "link": "https://pmaymis.gov.in"
+    }
 }
 
 def get_session(session_id):
@@ -133,51 +151,60 @@ def chatbot():
         
         # Initialize or retrieve session
         session = get_session(sender_id) or {
-            "step": "0",
+            "step": STEPS["WELCOME"],
             "context": "{}",
             "created_at": str(datetime.now()),
             "last_active": str(datetime.now())
         }
         
-        # Update session
-        session["last_active"] = str(datetime.now())
-        set_session(sender_id, session)
+        # Handle reset command
+        if "start over" in incoming_msg.lower():
+            session["step"] = STEPS["WELCOME"]
+            session["context"] = "{}"
+            set_session(sender_id, session)
+            return handle_conversation_step(session["step"], "", {})
         
         # Convert string context to dict if needed
         context = eval(session["context"]) if isinstance(session["context"], str) else session["context"]
         
-        # Determine response based on step
-        step = session["step"]
-        response = handle_conversation_step(step, incoming_msg, context)
+        # Get response for current step
+        response = handle_conversation_step(session["step"], incoming_msg, context)
+        
+        # Update session if step should change
+        if "next_step" in response:
+            session["step"] = response["next_step"]
         
         # Update context if changed
         if "context_update" in response:
             session["context"] = str(response["context_update"])
-            set_session(sender_id, session)
+        
+        # Always update last active time
+        session["last_active"] = str(datetime.now())
+        set_session(sender_id, session)
         
         return jsonify({
             "text": response["text"],
             "quick_replies": response.get("quick_replies", []),
             "buttons": response.get("buttons", [])
         })
-
     except Exception as e:
         logger.error(f"Chatbot error: {str(e)}")
         return jsonify({"text": "An error occurred. Please try again later."}), 500
 
 def handle_conversation_step(step, incoming_msg, context):
     """Handle conversation logic for each step"""
-    if step == "0":
+    if step == STEPS["WELCOME"]:
         return {
             "text": "Welcome to the Government Scheme Assistant! Would you like to:",
             "quick_replies": [
                 {"title": "Check Eligibility", "payload": "eligibility"},
                 {"title": "Browse Schemes", "payload": "browse"},
                 {"title": "Get Help", "payload": "help"}
-            ]
+            ],
+            "next_step": STEPS["MAIN_MENU"]
         }
     
-    elif step == "1":
+    elif step == STEPS["MAIN_MENU"]:
         if "eligibility" in incoming_msg.lower():
             return {
                 "text": "Let's check your eligibility. What is your age in years?",
@@ -188,8 +215,7 @@ def handle_conversation_step(step, incoming_msg, context):
                     {"title": "46-60", "payload": "46_60"},
                     {"title": "60+", "payload": "60_plus"}
                 ],
-                "context_update": context,
-                "next_step": "2"
+                "next_step": STEPS["ELIGIBILITY_AGE"]
             }
         elif "browse" in incoming_msg.lower():
             schemes = list(scheme_database.keys())[:5]
@@ -208,7 +234,7 @@ def handle_conversation_step(step, incoming_msg, context):
                 ]
             }
     
-    elif step == "2":
+    elif step == STEPS["ELIGIBILITY_AGE"]:
         try:
             age = int(''.join(filter(str.isdigit, incoming_msg)))
             if not validate_age(str(age)):
@@ -225,12 +251,96 @@ def handle_conversation_step(step, incoming_msg, context):
                     {"title": "10L+", "payload": "income_10L_plus"}
                 ],
                 "context_update": context,
-                "next_step": "3"
+                "next_step": STEPS["ELIGIBILITY_INCOME"]
             }
         except:
             return {"text": "Please enter a valid age number (e.g., 25)"}
     
-    # ... [Include steps 3-6 following the same pattern]
+    elif step == STEPS["ELIGIBILITY_INCOME"]:
+        try:
+            income = int(''.join(filter(str.isdigit, incoming_msg)))
+            context['income'] = income
+            return {
+                "text": "What is your occupation/profession?",
+                "quick_replies": [
+                    {"title": "Farmer", "payload": "farmer"},
+                    {"title": "Student", "payload": "student"},
+                    {"title": "Business", "payload": "business"},
+                    {"title": "Employee", "payload": "employee"},
+                    {"title": "Other", "payload": "other"}
+                ],
+                "context_update": context,
+                "next_step": STEPS["ELIGIBILITY_OCCUPATION"]
+            }
+        except:
+            return {"text": "Please enter a valid income amount (e.g., 250000)"}
+    
+    elif step == STEPS["ELIGIBILITY_OCCUPATION"]:
+        context['occupation'] = incoming_msg.lower()
+        return {
+            "text": "Which state do you live in?",
+            "quick_replies": [
+                {"title": "Tamil Nadu", "payload": "tamil_nadu"},
+                {"title": "Other State", "payload": "other_state"}
+            ],
+            "context_update": context,
+            "next_step": STEPS["ELIGIBILITY_LOCATION"]
+        }
+    
+    elif step == STEPS["ELIGIBILITY_LOCATION"]:
+        context['state'] = incoming_msg.lower()
+        
+        # Find matching schemes
+        eligible_schemes = []
+        for name, data in scheme_database.items():
+            eligible = True
+            
+            # Check age
+            if 'min_age' in data['eligibility'] and context.get('age', 0) < data['eligibility']['min_age']:
+                eligible = False
+            
+            # Check income
+            if data['eligibility'].get('income_max') and context.get('income', 0) > data['eligibility']['income_max']:
+                eligible = False
+            
+            # Check occupation
+            if data['eligibility'].get('occupation'):
+                if isinstance(data['eligibility']['occupation'], list):
+                    if context.get('occupation') not in data['eligibility']['occupation']:
+                        eligible = False
+                elif context.get('occupation') != data['eligibility']['occupation']:
+                    eligible = False
+            
+            # Check state
+            if data['eligibility'].get('state'):
+                if context.get('state') != data['eligibility']['state'].lower():
+                    eligible = False
+            
+            if eligible:
+                eligible_schemes.append(name)
+        
+        if eligible_schemes:
+            scheme_list = "\n\n".join([
+                f"• {name}:\n  Benefits: {scheme_database[name]['benefits']}\n  Apply: {scheme_database[name]['link']}"
+                for name in eligible_schemes
+            ])
+            return {
+                "text": f"Based on your details, you may be eligible for these schemes:\n\n{scheme_list}\n\nWould you like to check eligibility for other schemes?",
+                "quick_replies": [
+                    {"title": "Yes", "payload": "yes"},
+                    {"title": "No", "payload": "no"}
+                ],
+                "next_step": STEPS["MAIN_MENU"]
+            }
+        else:
+            return {
+                "text": "We couldn't find any schemes matching your profile. Would you like to try different criteria?",
+                "quick_replies": [
+                    {"title": "Try Again", "payload": "eligibility"},
+                    {"title": "Browse All", "payload": "browse"}
+                ],
+                "next_step": STEPS["MAIN_MENU"]
+            }
     
     else:
         return {
@@ -238,7 +348,8 @@ def handle_conversation_step(step, incoming_msg, context):
             "quick_replies": [
                 {"title": "Help", "payload": "help"},
                 {"title": "Start Over", "payload": "start_over"}
-            ]
+            ],
+            "next_step": STEPS["WELCOME"]
         }
 
 @app.route("/api/schemes", methods=['GET'])
