@@ -440,15 +440,14 @@ def chatbot():
         return jsonify({"text": "An error occurred. Please try again later."}), 500
 
 def handle_conversation_step(step, incoming_msg, context):
-    """Handle conversation logic for each step"""
+    """Handle conversation logic for each step with enhanced formatting"""
     if step == STEPS["WELCOME"]:
         return {
-            "text": "Welcome to Government Scheme AI Assistant! I can help you discover benefits you may qualify for.",
+            "text": "🌟 *Welcome to Government Scheme AI Assistant!* 🌟\n\nI can help you discover benefits you may qualify for. Choose an option:",
             "quick_replies": [
-                {"title": "Central Schemes", "payload": "central"},
-                {"title": "TN State Schemes", "payload": "tn"},
-                {"title": "All Schemes", "payload": "all"},
-                {"title": "Check Eligibility", "payload": "eligibility"}
+                {"title": "🔍 Browse Schemes", "payload": "browse"},
+                {"title": "✅ Check Eligibility", "payload": "eligibility"},
+                {"title": "ℹ️ Get Help", "payload": "help"}
             ],
             "next_step": STEPS["MAIN_MENU"]
         }
@@ -460,37 +459,103 @@ def handle_conversation_step(step, incoming_msg, context):
             
             if not schemes:
                 return {
-                    "text": f"No {scheme_type} schemes found. Would you like to try a different category?",
+                    "text": f"⚠️ No {scheme_type} schemes found. Try another category:",
                     "quick_replies": [
-                        {"title": "Central Schemes", "payload": "central"},
-                        {"title": "TN Schemes", "payload": "tn"},
-                        {"title": "All Schemes", "payload": "all"}
+                        {"title": "🇮🇳 Central", "payload": "central"},
+                        {"title": "🏛️ TN State", "payload": "tn"},
+                        {"title": "🌐 All", "payload": "all"}
                     ]
                 }
             
-            scheme_list = "\n".join([f"\n• {name}: {scheme_database[name]['benefits']}" 
-                                  for name in schemes[:10]])
+            scheme_list = "\n\n".join(
+                f"🔹 *{name}*\n   - Category: {scheme_database[name]['category']}\n   - Benefits: {scheme_database[name]['benefits']}"
+                for name in schemes[:5]  # Show first 5 schemes initially
+            )
             
             return {
-                "text": f"Here are {scheme_type} government schemes:{scheme_list}",
+                "text": f"📋 *{scheme_type.upper()} Government Schemes:*\n{scheme_list}",
+                "buttons": [{
+                    "title": f"View {schemes[0]} Details",
+                    "url": scheme_database[schemes[0]]['link'],
+                    "type": "web_url"
+                }] if schemes else [],
                 "quick_replies": [
-                    {"title": "See More", "payload": f"more_{scheme_type}"},
-                    {"title": "Check Eligibility", "payload": "eligibility"},
-                    {"title": "Main Menu", "payload": "menu"}
+                    {"title": "🔍 See More", "payload": f"more_{scheme_type}"},
+                    {"title": "✅ Check Eligibility", "payload": "eligibility"},
+                    {"title": "🏠 Main Menu", "payload": "menu"}
                 ]
             }
             
         elif incoming_msg.lower() == "eligibility":
             return {
-                "text": "Let's check your eligibility. What is your age in years? (You can type the number or select an option)",
+                "text": "📝 *Let's check your eligibility*\n\nWhat is your age in years? (Type number or select):",
                 "quick_replies": [
-                    {"title": "Under 18", "payload": "17"},
-                    {"title": "18-30", "payload": "25"},
-                    {"title": "31-45", "payload": "38"},
-                    {"title": "46-60", "payload": "53"},
-                    {"title": "60+", "payload": "65"}
+                    {"title": "👶 Under 18", "payload": "17"},
+                    {"title": "👦 18-30", "payload": "25"},
+                    {"title": "👨 31-45", "payload": "38"},
+                    {"title": "👴 46-60", "payload": "53"},
+                    {"title": "🧓 60+", "payload": "65"}
                 ],
                 "next_step": STEPS["ELIGIBILITY_AGE"]
+            }
+            
+        elif incoming_msg.startswith("more_"):
+            scheme_type = incoming_msg.replace("more_", "")
+            schemes = get_filtered_schemes(scheme_type)
+            scheme_list = "\n\n".join(
+                f"🔹 *{name}*\n   - Benefits: {scheme_database[name]['benefits']}"
+                for name in schemes[5:10]  # Next 5 schemes
+            )
+            
+            return {
+                "text": f"📋 *More {scheme_type.upper()} Schemes:*\n{scheme_list}",
+                "quick_replies": [
+                    {"title": "📄 View Details", "payload": f"details_{scheme_type}"},
+                    {"title": "🏠 Main Menu", "payload": "menu"}
+                ]
+            }
+            
+        elif incoming_msg.startswith("details_"):
+            scheme_type = incoming_msg.replace("details_", "")
+            schemes = get_filtered_schemes(scheme_type)
+            
+            return {
+                "text": f"🔎 Select a {scheme_type} scheme for full details:",
+                "quick_replies": [{"title": name, "payload": f"full_{name}"} for name in schemes[:5]] +
+                                [{"title": "⬅️ Back", "payload": scheme_type}]
+            }
+            
+        elif incoming_msg.startswith("full_"):
+            scheme_name = incoming_msg.replace("full_", "")
+            scheme = scheme_database.get(scheme_name)
+            
+            if not scheme:
+                return {
+                    "text": "⚠️ Scheme details not available. Please select another:",
+                    "quick_replies": [
+                        {"title": "🇮🇳 Central Schemes", "payload": "central"},
+                        {"title": "🏛️ TN Schemes", "payload": "tn"}
+                    ]
+                }
+                
+            return {
+                "text": (
+                    f"📄 *{scheme_name}*\n"
+                    f"   - Category: {scheme['category']}\n"
+                    f"   - Benefits: {scheme['benefits']}\n"
+                    f"   - Eligibility:\n      {format_eligibility(scheme['eligibility']).replace('\n', '\n      ')}\n"
+                    f"   - Deadline: {scheme['deadline']}\n"
+                    f"   - Steps:\n      {scheme['steps'].replace('\n', '\n      ')}"
+                ),
+                "buttons": [{
+                    "title": "🖥️ Apply Online",
+                    "url": scheme['link'],
+                    "type": "web_url"
+                }],
+                "quick_replies": [
+                    {"title": "🔙 Back", "payload": f"details_{'tn' if scheme['eligibility'].get('state') else 'central'}"},
+                    {"title": "🏠 Main Menu", "payload": "menu"}
+                ]
             }
             
         elif incoming_msg == "menu":
@@ -498,11 +563,10 @@ def handle_conversation_step(step, incoming_msg, context):
             
         else:
             return {
-                "text": get_ai_response(incoming_msg) or "I can help with government schemes. Please select an option:",
+                "text": get_ai_response(incoming_msg) or "ℹ️ Please select an option:",
                 "quick_replies": [
-                    {"title": "Central Schemes", "payload": "central"},
-                    {"title": "TN Schemes", "payload": "tn"},
-                    {"title": "Check Eligibility", "payload": "eligibility"}
+                    {"title": "🔍 Browse Schemes", "payload": "browse"},
+                    {"title": "✅ Check Eligibility", "payload": "eligibility"}
                 ]
             }
     
@@ -514,23 +578,23 @@ def handle_conversation_step(step, incoming_msg, context):
                 age = int(''.join(filter(str.isdigit, incoming_msg)))
             
             if not validate_age(str(age)):
-                return {"text": "Please enter a valid age between 10 and 120 years"}
+                return {"text": "⚠️ Please enter a valid age (10-120 years)"}
             
             context['age'] = age
             return {
-                "text": "What is your approximate annual family income in ₹?",
+                "text": "💰 *What is your approximate annual family income?*",
                 "quick_replies": [
-                    {"title": "Under 1L", "payload": "100000"},
-                    {"title": "1L-3L", "payload": "200000"},
-                    {"title": "3L-5L", "payload": "400000"},
-                    {"title": "5L-10L", "payload": "750000"},
-                    {"title": "10L+", "payload": "1000000"}
+                    {"title": "≤ ₹1L", "payload": "100000"},
+                    {"title": "₹1L-3L", "payload": "200000"},
+                    {"title": "₹3L-5L", "payload": "400000"},
+                    {"title": "₹5L-10L", "payload": "750000"},
+                    {"title": "≥ ₹10L", "payload": "1000000"}
                 ],
                 "context_update": context,
                 "next_step": STEPS["ELIGIBILITY_INCOME"]
             }
         except:
-            return {"text": "Please enter a valid age number (e.g., 25) or select an option"}
+            return {"text": "⚠️ Please enter a valid age (e.g., 25) or select an option"}
     
     elif step == STEPS["ELIGIBILITY_INCOME"]:
         try:
@@ -540,24 +604,24 @@ def handle_conversation_step(step, incoming_msg, context):
                 income = int(''.join(filter(str.isdigit, incoming_msg)))
             context['income'] = income
             return {
-                "text": "What is your occupation/profession?",
+                "text": "💼 *What is your occupation/profession?*",
                 "quick_replies": [
-                    {"title": "Farmer", "payload": "farmer"},
-                    {"title": "Student", "payload": "student"},
-                    {"title": "Business", "payload": "business"},
-                    {"title": "Employee", "payload": "employee"},
+                    {"title": "👨‍🌾 Farmer", "payload": "farmer"},
+                    {"title": "👨‍🎓 Student", "payload": "student"},
+                    {"title": "👨‍💼 Business", "payload": "business"},
+                    {"title": "👨‍💻 Employee", "payload": "employee"},
                     {"title": "Other", "payload": "other"}
                 ],
                 "context_update": context,
                 "next_step": STEPS["ELIGIBILITY_OCCUPATION"]
             }
         except:
-            return {"text": "Please enter a valid income amount (e.g., 250000) or select an option"}
+            return {"text": "⚠️ Please enter a valid income (e.g., 250000) or select"}
     
     elif step == STEPS["ELIGIBILITY_OCCUPATION"]:
         context['occupation'] = incoming_msg.lower()
         return {
-            "text": "Which state do you live in?",
+            "text": "📍 *Which state do you live in?*",
             "quick_replies": [
                 {"title": "Tamil Nadu", "payload": "tamil nadu"},
                 {"title": "Other State", "payload": "other"}
@@ -574,12 +638,15 @@ def handle_conversation_step(step, incoming_msg, context):
             for name, data in scheme_database.items():
                 eligible = True
                 
+                # Check age
                 if 'min_age' in data['eligibility'] and context.get('age', 0) < data['eligibility']['min_age']:
                     eligible = False
                 
+                # Check income
                 if data['eligibility'].get('income_max') and context.get('income', 0) > data['eligibility']['income_max']:
                     eligible = False
                 
+                # Check occupation
                 if data['eligibility'].get('occupation'):
                     if isinstance(data['eligibility']['occupation'], list):
                         if context.get('occupation') not in data['eligibility']['occupation']:
@@ -587,6 +654,7 @@ def handle_conversation_step(step, incoming_msg, context):
                     elif context.get('occupation') != data['eligibility']['occupation']:
                         eligible = False
                 
+                # Check state
                 if data['eligibility'].get('state'):
                     if context.get('state') != data['eligibility']['state'].lower():
                         eligible = False
@@ -595,48 +663,58 @@ def handle_conversation_step(step, incoming_msg, context):
                     eligible_schemes.append(name)
             
             if eligible_schemes:
-                scheme_list = "\n".join([
-                    f"\n• {name}: {scheme_database[name]['benefits']}\n  Apply: {scheme_database[name]['link']}"
-                    for name in eligible_schemes
-                ])
+                scheme_list = []
+                for name in eligible_schemes[:10]:  # Limit to top 10 eligible schemes
+                    scheme = scheme_database[name]
+                    scheme_list.append(
+                        f"\n\n⭐ *{name}* ({scheme['category']})\n"
+                        f"   - Benefits: {scheme['benefits']}\n"
+                        f"   - Eligibility: {format_eligibility(scheme['eligibility'])}\n"
+                        f"   - Apply: {scheme['link']}"
+                    )
+                
                 return {
-                    "text": f"Based on your details, you may be eligible for these schemes:{scheme_list}\n\nWould you like to check eligibility for other schemes?",
+                    "text": f"🎉 *You may qualify for these schemes:*" + "".join(scheme_list) +
+                           "\n\nWould you like to check again or browse more?",
+                    "buttons": [{
+                        "title": f"Apply for {name}",
+                        "url": scheme_database[name]['link'],
+                        "type": "web_url"
+                    } for name in eligible_schemes[:3]],  # Max 3 apply buttons
                     "quick_replies": [
-                        {"title": "Yes", "payload": "eligibility"},
-                        {"title": "No", "payload": "no"}
-                    ],
-                    "next_step": STEPS["MAIN_MENU"]
+                        {"title": "🔄 Check Again", "payload": "eligibility"},
+                        {"title": "📋 Browse All", "payload": "all"},
+                        {"title": "🏠 Main Menu", "payload": "menu"}
+                    ]
                 }
             else:
                 return {
-                    "text": "We couldn't find any schemes matching your profile. Would you like to try different criteria?",
+                    "text": "🤔 We couldn't find matching schemes. Try adjusting:",
                     "quick_replies": [
-                        {"title": "Try Again", "payload": "eligibility"},
-                        {"title": "Browse All", "payload": "browse"}
-                    ],
-                    "next_step": STEPS["MAIN_MENU"]
+                        {"title": "🔼 Increase Income Limit", "payload": "increase_income"},
+                        {"title": "🔄 Change Occupation", "payload": "change_occupation"},
+                        {"title": "🌐 Browse All", "payload": "all"}
+                    ]
                 }
         except Exception as e:
-            logger.error(f"Eligibility check error: {str(e)}")
+            logger.error(f"Eligibility error: {str(e)}")
             return {
-                "text": "An error occurred while checking eligibility. Please try again.",
+                "text": "⚠️ Something went wrong. Let's try again:",
                 "quick_replies": [
-                    {"title": "Try Again", "payload": "eligibility"},
-                    {"title": "Main Menu", "payload": "menu"}
-                ],
-                "next_step": STEPS["MAIN_MENU"]
+                    {"title": "🔄 Retry Eligibility", "payload": "eligibility"},
+                    {"title": "🏠 Main Menu", "payload": "menu"}
+                ]
             }
     
     else:
         return {
-            "text": "I didn't understand that. Type 'help' for options or 'start over' to begin again.",
+            "text": "🤖 I didn't understand that. Choose an option:",
             "quick_replies": [
-                {"title": "Help", "payload": "help"},
-                {"title": "Start Over", "payload": "start_over"}
+                {"title": "🆘 Help", "payload": "help"},
+                {"title": "🔄 Start Over", "payload": "start_over"}
             ],
             "next_step": STEPS["WELCOME"]
         }
-
 @app.route("/api/schemes", methods=['GET'])
 def list_schemes():
     """API endpoint to list all schemes"""
