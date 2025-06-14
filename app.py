@@ -148,6 +148,7 @@ def chatbot():
         data = request.get_json()
         incoming_msg = sanitize_input(data.get('message', '').strip())
         sender_id = data.get('sender', str(uuid.uuid4()))
+        payload = data.get('payload', incoming_msg)  # Get payload if available
         
         # Initialize or retrieve session
         session = get_session(sender_id) or {
@@ -168,7 +169,7 @@ def chatbot():
         context = eval(session["context"]) if isinstance(session["context"], str) else session["context"]
         
         # Get response for current step
-        response = handle_conversation_step(session["step"], incoming_msg, context)
+        response = handle_conversation_step(session["step"], payload or incoming_msg, context)
         
         # Update session if step should change
         if "next_step" in response:
@@ -205,19 +206,19 @@ def handle_conversation_step(step, incoming_msg, context):
         }
     
     elif step == STEPS["MAIN_MENU"]:
-        if "eligibility" in incoming_msg.lower():
+        if incoming_msg.lower() == "eligibility":
             return {
-                "text": "Let's check your eligibility. What is your age in years?",
+                "text": "Let's check your eligibility. What is your age in years? (You can type the number or select an option)",
                 "quick_replies": [
-                    {"title": "Under 18", "payload": "under_18"},
-                    {"title": "18-30", "payload": "18_30"},
-                    {"title": "31-45", "payload": "31_45"},
-                    {"title": "46-60", "payload": "46_60"},
-                    {"title": "60+", "payload": "60_plus"}
+                    {"title": "Under 18", "payload": "17"},
+                    {"title": "18-30", "payload": "25"},
+                    {"title": "31-45", "payload": "38"},
+                    {"title": "46-60", "payload": "53"},
+                    {"title": "60+", "payload": "65"}
                 ],
                 "next_step": STEPS["ELIGIBILITY_AGE"]
             }
-        elif "browse" in incoming_msg.lower():
+        elif incoming_msg.lower() == "browse":
             schemes = list(scheme_database.keys())[:5]
             return {
                 "text": "Here are some key government schemes:\n\n" +
@@ -236,7 +237,13 @@ def handle_conversation_step(step, incoming_msg, context):
     
     elif step == STEPS["ELIGIBILITY_AGE"]:
         try:
-            age = int(''.join(filter(str.isdigit, incoming_msg)))
+            # Check if it's a quick reply payload (which should be a number)
+            if incoming_msg.isdigit():
+                age = int(incoming_msg)
+            else:
+                # Try to extract number from text
+                age = int(''.join(filter(str.isdigit, incoming_msg)))
+            
             if not validate_age(str(age)):
                 return {"text": "Please enter a valid age between 10 and 120 years"}
             
@@ -244,21 +251,24 @@ def handle_conversation_step(step, incoming_msg, context):
             return {
                 "text": "What is your approximate annual family income in ₹?",
                 "quick_replies": [
-                    {"title": "Under 1L", "payload": "income_1L"},
-                    {"title": "1L-3L", "payload": "income_1_3L"},
-                    {"title": "3L-5L", "payload": "income_3_5L"},
-                    {"title": "5L-10L", "payload": "income_5_10L"},
-                    {"title": "10L+", "payload": "income_10L_plus"}
+                    {"title": "Under 1L", "payload": "100000"},
+                    {"title": "1L-3L", "payload": "200000"},
+                    {"title": "3L-5L", "payload": "400000"},
+                    {"title": "5L-10L", "payload": "750000"},
+                    {"title": "10L+", "payload": "1000000"}
                 ],
                 "context_update": context,
                 "next_step": STEPS["ELIGIBILITY_INCOME"]
             }
         except:
-            return {"text": "Please enter a valid age number (e.g., 25)"}
+            return {"text": "Please enter a valid age number (e.g., 25) or select an option"}
     
     elif step == STEPS["ELIGIBILITY_INCOME"]:
         try:
-            income = int(''.join(filter(str.isdigit, incoming_msg)))
+            if incoming_msg.isdigit():
+                income = int(incoming_msg)
+            else:
+                income = int(''.join(filter(str.isdigit, incoming_msg)))
             context['income'] = income
             return {
                 "text": "What is your occupation/profession?",
@@ -273,15 +283,15 @@ def handle_conversation_step(step, incoming_msg, context):
                 "next_step": STEPS["ELIGIBILITY_OCCUPATION"]
             }
         except:
-            return {"text": "Please enter a valid income amount (e.g., 250000)"}
+            return {"text": "Please enter a valid income amount (e.g., 250000) or select an option"}
     
     elif step == STEPS["ELIGIBILITY_OCCUPATION"]:
         context['occupation'] = incoming_msg.lower()
         return {
             "text": "Which state do you live in?",
             "quick_replies": [
-                {"title": "Tamil Nadu", "payload": "tamil_nadu"},
-                {"title": "Other State", "payload": "other_state"}
+                {"title": "Tamil Nadu", "payload": "tamil nadu"},
+                {"title": "Other State", "payload": "other"}
             ],
             "context_update": context,
             "next_step": STEPS["ELIGIBILITY_LOCATION"]
@@ -327,7 +337,7 @@ def handle_conversation_step(step, incoming_msg, context):
             return {
                 "text": f"Based on your details, you may be eligible for these schemes:\n\n{scheme_list}\n\nWould you like to check eligibility for other schemes?",
                 "quick_replies": [
-                    {"title": "Yes", "payload": "yes"},
+                    {"title": "Yes", "payload": "eligibility"},
                     {"title": "No", "payload": "no"}
                 ],
                 "next_step": STEPS["MAIN_MENU"]
