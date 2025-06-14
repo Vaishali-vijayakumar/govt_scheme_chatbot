@@ -345,6 +345,179 @@ def set_session(session_id: str, data: SessionData) -> bool:
         logger.error(f"Redis error in set_session: {str(e)}")
         user_sessions[session_id] = data
         return False
+# Add these new functions to your existing backend
+
+def get_help_response() -> Dict[str, Any]:
+    """Generate detailed help response"""
+    return {
+        "text": (
+            "🆘 *Government Scheme Assistant Help*\n\n"
+            "I can help you with:\n\n"
+            "1. *Discovering Schemes* - Browse all government schemes or find ones you qualify for\n"
+            "2. *Eligibility Checking* - Answer a few questions to see which schemes match your profile\n"
+            "3. *Scheme Details* - Get step-by-step application instructions for any scheme\n\n"
+            "Here are some things you can ask me:\n"
+            "- \"What agriculture schemes are available?\"\n"
+            "- \"Check my eligibility for housing schemes\"\n"
+            "- \"Show me student benefits in Tamil Nadu\"\n"
+            "- \"Explain PM-KISAN application process\""
+        ),
+        "quick_replies": [
+            {"title": "🌾 Agriculture", "payload": "agriculture"},
+            {"title": "🏠 Housing", "payload": "housing"},
+            {"title": "🎓 Education", "payload": "education"},
+            {"title": "🏥 Healthcare", "payload": "healthcare"},
+            {"title": "🏠 Main Menu", "payload": "menu"}
+        ]
+    }
+
+def get_scheme_by_category(category: str) -> Dict[str, Any]:
+    """Get schemes filtered by category"""
+    matched_schemes = []
+    category = category.lower()
+    
+    for name, data in SCHEME_DATABASE.items():
+        if category in data['category'].lower():
+            matched_schemes.append((name, data))
+    
+    if not matched_schemes:
+        return {
+            "text": f"⚠️ No schemes found in {category} category. Try these instead:",
+            "quick_replies": [
+                {"title": "🌾 Agriculture", "payload": "agriculture"},
+                {"title": "🏠 Housing", "payload": "housing"},
+                {"title": "🏠 Main Menu", "payload": "menu"}
+            ]
+        }
+    
+    scheme_list = "\n\n".join(
+        f"🔹 *{name}*\n   - Benefits: {data['benefits']}\n   - Eligibility: {format_eligibility(data['eligibility'])}"
+        for name, data in matched_schemes[:5]
+    )
+    
+    return {
+        "text": f"📋 *{category.capitalize()} Schemes:*\n{scheme_list}",
+        "quick_replies": [
+            {"title": f"🔍 More {category}", "payload": f"more_{category}"},
+            {"title": "✅ Check Eligibility", "payload": "eligibility"},
+            {"title": "🏠 Main Menu", "payload": "menu"}
+        ]
+    }
+
+def generate_eligible_schemes_response(context: ContextData) -> Dict[str, Any]:
+    """Generate structured response with eligible schemes"""
+    eligible_schemes = []
+    
+    for name, data in SCHEME_DATABASE.items():
+        if is_eligible(context, data['eligibility']):
+            eligible_schemes.append((name, data))
+    
+    if not eligible_schemes:
+        return {
+            "text": (
+                "🤔 We couldn't find any schemes matching your profile.\n\n"
+                "*Your Profile:*\n"
+                f"- Age: {context.get('age', 'Not specified')}\n"
+                f"- Income: ₹{context.get('income', 'Not specified'):,}\n"
+                f"- Occupation: {context.get('occupation', 'Not specified').capitalize()}\n"
+                f"- State: {context.get('state', 'Not specified').capitalize()}\n\n"
+                "Try adjusting your criteria or browse all schemes:"
+            ),
+            "quick_replies": [
+                {"title": "🔼 Increase Income", "payload": "increase_income"},
+                {"title": "🔄 Change Occupation", "payload": "change_occupation"},
+                {"title": "🌐 Browse All", "payload": "all"},
+                {"title": "🏠 Main Menu", "payload": "menu"}
+            ]
+        }
+    
+    # Sort by category then by scheme name
+    eligible_schemes.sort(key=lambda x: (x[1]['category'], x[0]))
+    
+    # Prepare structured data for frontend
+    scheme_categories = {}
+    for name, data in eligible_schemes:
+        if data['category'] not in scheme_categories:
+            scheme_categories[data['category']] = []
+        scheme_categories[data['category']].append({
+            "name": name,
+            "benefits": data['benefits'],
+            "eligibility": format_eligibility(data['eligibility']),
+            "link": data['link'],
+            "deadline": data['deadline']
+        })
+    
+    # Format text response
+    response_text = (
+        f"🎉 *Based on your profile, you may qualify for these {len(eligible_schemes)} schemes:*\n\n"
+        "*Your Profile:*\n"
+        f"- Age: {context.get('age')}\n"
+        f"- Income: ₹{context.get('income'):,}\n"
+        f"- Occupation: {context.get('occupation').capitalize()}\n"
+        f"- State: {context.get('state').capitalize()}\n\n"
+    )
+    
+    for category, schemes in scheme_categories.items():
+        response_text += f"*{category} Schemes:*\n"
+        for scheme in schemes[:3]:  # Show max 3 per category in text
+            response_text += (
+                f"🔹 {scheme['name']}\n"
+                f"   - Benefits: {scheme['benefits']}\n"
+                f"   - Apply: {scheme['link']}\n\n"
+            )
+    
+    if len(eligible_schemes) > 6:
+        response_text += f"\nShowing {min(6, len(eligible_schemes))} of {len(eligible_schemes)} eligible schemes. See all in the eligibility section above."
+    
+    return {
+        "text": response_text,
+        "structured_data": {
+            "eligible_schemes": eligible_schemes[:10],  # Limit to 10 for display
+            "user_profile": context
+        },
+        "quick_replies": [
+            {"title": "🔄 Check Again", "payload": "eligibility"},
+            {"title": "📋 Browse All", "payload": "all"},
+            {"title": "🏠 Main Menu", "payload": "menu"}
+        ]
+    }
+
+# Update the handle_conversation_step function to include new features
+def handle_conversation_step(step: str, incoming_msg: str, context: ContextData) -> Dict[str, Any]:
+    """Enhanced conversation handler"""
+    try:
+        # Check for help request
+        if incoming_msg.lower() in ["help", "assistance", "support"]:
+            return get_help_response()
+        
+        # Check for category-based queries
+        if incoming_msg.lower() in ["agriculture", "housing", "education", "healthcare"]:
+            return get_scheme_by_category(incoming_msg.lower())
+        
+        # Original step handling
+        if step == ConversationSteps.WELCOME:
+            return welcome_step()
+        elif step == ConversationSteps.MAIN_MENU:
+            return main_menu_step(incoming_msg)
+        elif step == ConversationSteps.ELIGIBILITY_AGE:
+            return eligibility_age_step(incoming_msg, context)
+        elif step == ConversationSteps.ELIGIBILITY_INCOME:
+            return eligibility_income_step(incoming_msg, context)
+        elif step == ConversationSteps.ELIGIBILITY_OCCUPATION:
+            return eligibility_occupation_step(incoming_msg, context)
+        elif step == ConversationSteps.ELIGIBILITY_LOCATION:
+            # After collecting all eligibility info, generate full response
+            response = eligibility_location_step(incoming_msg, context)
+            if "context_update" in response:
+                context = response["context_update"]
+                eligible_response = generate_eligible_schemes_response(context)
+                response.update(eligible_response)
+            return response
+        else:
+            return unknown_step()
+    except Exception as e:
+        logger.error(f"Error in conversation step {step}: {str(e)}")
+        return error_step()
 
 def sanitize_input(text: str) -> str:
     """Sanitize user input to prevent XSS"""
