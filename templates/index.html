@@ -784,27 +784,144 @@
             });
         }
         
-        // Display eligible schemes in the right panel
-        function displayEligibleSchemes(text) {
-            // First add the bot message to the chat
-            addBotMessage(text);
-            
-            // The backend should ideally return the actual eligible schemes in the response
-            // For now, we'll parse the text to extract scheme names (this is a simplified approach)
-            
-            // This is a placeholder - in a real implementation, the backend should return
-            // the eligible schemes as structured data
-            const eligibleContainer = document.getElementById('eligible-schemes-container');
-            eligibleContainer.innerHTML = `
-                <div class="eligible-scheme fade-in">
-                    <p>${text.replace(/\n/g, '<br>')}</p>
-                    <p>Check the list above for details about each scheme.</p>
-                </div>
+        // Update the displayEligibleSchemes function in your frontend code
+function displayEligibleSchemes(data) {
+    const eligibleContainer = document.getElementById('eligible-schemes-container');
+    
+    // Clear previous results
+    eligibleContainer.innerHTML = '';
+    
+    // Check if we have structured data
+    if (data.structured_data && data.structured_data.eligible_schemes) {
+        const { eligible_schemes, user_profile } = data.structured_data;
+        
+        // Create profile summary
+        const profileSummary = document.createElement('div');
+        profileSummary.className = 'eligible-scheme fade-in';
+        profileSummary.innerHTML = `
+            <h3><i class="fas fa-user-circle"></i> Your Profile</h3>
+            <div class="profile-details">
+                <p><strong>Age:</strong> ${user_profile.age}</p>
+                <p><strong>Annual Income:</strong> ₹${user_profile.income.toLocaleString()}</p>
+                <p><strong>Occupation:</strong> ${user_profile.occupation.charAt(0).toUpperCase() + user_profile.occupation.slice(1)}</p>
+                <p><strong>State:</strong> ${user_profile.state.charAt(0).toUpperCase() + user_profile.state.slice(1)}</p>
+            </div>
+        `;
+        eligibleContainer.appendChild(profileSummary);
+        
+        // Group schemes by category
+        const schemesByCategory = {};
+        eligible_schemes.forEach(([name, scheme]) => {
+            if (!schemesByCategory[scheme.category]) {
+                schemesByCategory[scheme.category] = [];
+            }
+            schemesByCategory[scheme.category].push({ name, ...scheme });
+        });
+        
+        // Create sections for each category
+        for (const [category, schemes] of Object.entries(schemesByCategory)) {
+            const categorySection = document.createElement('div');
+            categorySection.className = 'scheme-category fade-in';
+            categorySection.innerHTML = `
+                <h3><i class="fas fa-folder-open"></i> ${category} (${schemes.length})</h3>
             `;
             
-            // Scroll to the eligible schemes
-            eligibleContainer.scrollIntoView({ behavior: 'smooth' });
+            schemes.forEach(scheme => {
+                const schemeElement = document.createElement('div');
+                schemeElement.className = 'eligible-scheme';
+                schemeElement.innerHTML = `
+                    <div class="scheme-title">${scheme.name}</div>
+                    <div class="scheme-benefit"><strong>Benefits:</strong> ${scheme.benefits}</div>
+                    <div class="scheme-benefit"><strong>Eligibility:</strong> ${formatEligibility(scheme.eligibility)}</div>
+                    <div class="scheme-benefit"><strong>Deadline:</strong> ${scheme.deadline}</div>
+                    <a href="${scheme.link}" target="_blank" class="scheme-link">
+                        <i class="fas fa-external-link-alt"></i> Apply Online
+                    </a>
+                    <button class="details-button" data-scheme="${scheme.name}">
+                        <i class="fas fa-info-circle"></i> View Details
+                    </button>
+                `;
+                categorySection.appendChild(schemeElement);
+            });
+            
+            eligibleContainer.appendChild(categorySection);
         }
+        
+        // Add event listeners for details buttons
+        document.querySelectorAll('.details-button').forEach(button => {
+            button.addEventListener('click', function() {
+                const schemeName = this.getAttribute('data-scheme');
+                showSchemeDetails(SCHEME_DATABASE[schemeName]);
+            });
+        });
+    } else {
+        // Fallback to text display if no structured data
+        const fallbackElement = document.createElement('div');
+        fallbackElement.className = 'eligible-scheme fade-in';
+        fallbackElement.innerHTML = `
+            <p>${data.text.replace(/\n/g, '<br>')}</p>
+            <p>Check the scheme browser for more details.</p>
+        `;
+        eligibleContainer.appendChild(fallbackElement);
+    }
+    
+    // Scroll to the results
+    eligibleContainer.scrollIntoView({ behavior: 'smooth' });
+    
+    // Add the bot message to chat
+    addBotMessage(data.text);
+}
+
+// Add this new CSS to your styles
+.scheme-category {
+    margin-bottom: 20px;
+    background-color: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+}
+
+.scheme-category h3 {
+    color: var(--primary-color);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+}
+
+.scheme-category h3 i {
+    margin-right: 10px;
+}
+
+.profile-details {
+    background-color: #e8f4fc;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.profile-details p {
+    margin-bottom: 5px;
+}
+
+.details-button {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 4px;
+    margin-top: 10px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    margin-right: 10px;
+}
+
+.details-button:hover {
+    background-color: var(--secondary-color);
+}
+
+.details-button i {
+    margin-right: 5px;
+}
     </script>
 </body>
 </html>
