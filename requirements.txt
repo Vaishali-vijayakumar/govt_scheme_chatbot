@@ -1,3 +1,5 @@
-Flask
-flask-cors
-gunicorn
+flask==2.3.2
+flask-cors==3.0.10
+python-dotenv==1.0.0
+openai==0.27.8
+gunicorn==20.1.0
