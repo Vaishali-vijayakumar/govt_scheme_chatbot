@@ -1,173 +1,346 @@
 from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
+import logging
+from datetime import datetime, timedelta
+import uuid
+import os
+from dotenv import load_dotenv
+import openai
+
+# Load environment variables
+load_dotenv()
 
 app = Flask(__name__)
 CORS(app)
 
-user_data = {}
+# Configuration
+app.secret_key = os.getenv('SECRET_KEY', 'supersecretkey')
 
-# Tamil & English scheme apply steps
-scheme_steps = {
-    "PM-KISAN": "📌 Visit https://pmkisan.gov.in\n🧾 Click 'Farmers Corner' > 'New Farmer Registration'\n📄 Submit Aadhaar, bank & land details.",
-    "Ayushman Bharat": "📌 Visit https://pmjay.gov.in\n🧾 Check your name under eligibility.\n🏥 Visit nearest empanelled hospital with ID proof.",
-    "Kalaignar Magalir Urimai Thogai": "📌 Apply via Tamil Nadu e-Sevai centers or https://kmut.tn.gov.in\n🧾 Aadhaar-linked bank account required.\n📄 Submit ration card, income certificate.",
-    "Old Age Pension": "📌 Apply at your local Panchayat/Revenue Office.\n📄 Submit Age proof, income proof & Aadhaar.",
-    "Widow Pension Scheme": "📌 Submit application at Social Welfare Department or online (state portals).\n📄 Required: Death Certificate of spouse, Aadhaar, income proof.",
-    "Free Laptop Scheme": "📌 School/college will register eligible students.\n🧾 No separate application needed. Contact institution head.",
-    "PMEGP Loan": "📌 Visit https://www.kviconline.gov.in/pmegp\n📄 Register, fill online form with Aadhaar, project details\n🏦 Submit via your preferred bank/financial institution.",
-    "SC/ST Scholarships": "📌 Visit https://scholarships.gov.in\n🧾 Select Post/Pre Matric Scholarship.\n📄 Submit caste certificate, Aadhaar, income proof, marksheets.",
-    "OBC Scholarships": "📌 Apply via https://scholarships.gov.in or TN e-district portal\n📄 Need caste/income proof, marksheets, bank details.",
-    "NMMS": "📌 Application through school\n🧾 Attend exam conducted by education department\n📄 Aadhaar, income certificate, marksheets needed.",
-    "CMCHIS": "📌 Enroll at TN e-Sevai centers or special camps\n🧾 Submit Aadhaar, ration card\n🏥 Get e-card, use at empanelled hospitals.",
-    "PMAY Gramin": "📌 Visit https://pmayg.nic.in\n🧾 Apply via Panchayat/online.\n📄 Aadhaar, income, land ownership proof needed.",
-    "National Apprenticeship Promotion Scheme": "📌 Register at https://apprenticeshipindia.gov.in\n📄 Aadhaar, qualification, bank details required.\n🏢 Find and apply to listed employers.",
-    "Uzhavar Pathukappu Thittam": "📌 Tamil Nadu Agriculture Department\n🧾 For registered TN farmers.\n📄 Aadhaar, chitta copy, bank passbook.",
-    "Destitute Women Pension": "📌 Apply through TN Social Welfare Dept.\n📄 Widow certificate, income proof, Aadhaar.\n👩‍🦳 For deserted/divorced women."
+# Initialize services
+openai.api_key = os.getenv('OPENAI_API_KEY')
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# Session management
+user_sessions = {}
+
+# Enhanced scheme database
+scheme_database = {
+    # Central Government Schemes
+    "PM-KISAN": {
+        "category": "Agriculture",
+        "steps": "1. Visit https://pmkisan.gov.in\n2. Click 'Farmers Corner' > 'New Farmer Registration'\n3. Submit Aadhaar, bank & land details",
+        "eligibility": {"min_age": 18, "occupation": ["farmer"], "income_max": None},
+        "benefits": "₹6,000/year in 3 installments",
+        "deadline": "Ongoing",
+        "link": "https://pmkisan.gov.in"
+    },
+    "Ayushman Bharat (PMJAY)": {
+        "category": "Healthcare",
+        "steps": "1. Check eligibility at https://pmjay.gov.in\n2. Visit empanelled hospital with ID proof",
+        "eligibility": {"income_max": 150000, "family_structure": ["all"]},
+        "benefits": "Health insurance up to ₹5 lakh per family/year",
+        "deadline": "Ongoing",
+        "link": "https://pmjay.gov.in"
+    },
+    "Pradhan Mantri Awas Yojana (PMAY)": {
+        "category": "Housing",
+        "steps": "1. Apply via municipal corporation/gram panchayat\n2. Submit required documents\n3. Wait for verification",
+        "eligibility": {"income_max": 180000, "house_ownership": False},
+        "benefits": "Up to ₹2.67 lakh subsidy for urban areas",
+        "deadline": "2024-12-31",
+        "link": "https://pmaymis.gov.in"
+    },
+    "Ujjwala Yojana": {
+        "category": "Social Welfare",
+        "steps": "1. Submit application at LPG distributor\n2. Provide BPL certificate and Aadhaar",
+        "eligibility": {"gender": "female", "bpl_status": True},
+        "benefits": "Free LPG connection with cylinder",
+        "deadline": "Ongoing",
+        "link": "https://www.pmuy.gov.in"
+    },
+    "Stand-Up India": {
+        "category": "Entrepreneurship",
+        "steps": "1. Apply through participating banks\n2. Submit business plan and documents",
+        "eligibility": {"gender": ["female", "sc/st"], "min_age": 18},
+        "benefits": "Loan from ₹10 lakh to ₹1 crore",
+        "deadline": "Ongoing",
+        "link": "https://www.standupmitra.in"
+    },
+    "PM SVANidhi": {
+        "category": "Urban Development",
+        "steps": "1. Apply through municipal corporation\n2. Submit vendor certificate and Aadhaar",
+        "eligibility": {"occupation": ["street vendor"], "urban": True},
+        "benefits": "₹10,000 working capital loan",
+        "deadline": "2024-12-31",
+        "link": "https://pmsvanidhi.mohua.gov.in"
+    },
+    
+    # Tamil Nadu State Schemes
+    "Kalaignar Magalir Urimai Thogai": {
+        "category": "Social Welfare",
+        "steps": "1. Apply at ration shops/e-sevai centers\n2. Submit Aadhaar and family details",
+        "eligibility": {"state": "Tamil Nadu", "gender": "female", "family_head": True},
+        "benefits": "₹1,000/month for women family heads",
+        "deadline": "Ongoing",
+        "link": "https://kmut.tn.gov.in"
+    },
+    "CMCHIS": {
+        "category": "Healthcare",
+        "steps": "1. Enroll at designated camps\n2. Submit ration card and Aadhaar",
+        "eligibility": {"state": "Tamil Nadu", "income_max": 75000},
+        "benefits": "Health insurance up to ₹5 lakh/year",
+        "deadline": "Ongoing",
+        "link": "https://www.cmchistn.gov.in"
+    },
+    "Free Laptop Scheme": {
+        "category": "Education",
+        "steps": "1. No separate application needed\n2. Schools/colleges will distribute",
+        "eligibility": {"state": "Tamil Nadu", "education": ["12th", "college"]},
+        "benefits": "Free laptop for students",
+        "deadline": "Annual",
+        "link": "https://www.tn.gov.in"
+    },
+    "Uzhavar Pathukappu Thittam": {
+        "category": "Agriculture",
+        "steps": "1. Register at agriculture department office\n2. Submit land records",
+        "eligibility": {"state": "Tamil Nadu", "occupation": ["farmer"]},
+        "benefits": "₹5,000 aid during natural calamities",
+        "deadline": "Ongoing",
+        "link": "https://www.tnagrisnet.tn.gov.in"
+    },
+    "Amma Two-Wheeler Scheme": {
+        "category": "Social Welfare",
+        "steps": "1. Apply through transport department\n2. Submit income certificate",
+        "eligibility": {"state": "Tamil Nadu", "gender": "female", "income_max": 250000},
+        "benefits": "50% subsidy up to ₹25,000",
+        "deadline": "Ongoing",
+        "link": "https://www.tn.gov.in"
+    },
+    "Chief Minister's Breakfast Scheme": {
+        "category": "Education",
+        "steps": "1. Automatic enrollment for government school students\n2. No application needed",
+        "eligibility": {"state": "Tamil Nadu", "education": ["school"]},
+        "benefits": "Free nutritious breakfast",
+        "deadline": "Ongoing",
+        "link": "https://www.tn.gov.in"
+    }
 }
 
-def respond(en_text, ta_text=None):
-    return en_text + (f"\n{ta_text}" if ta_text else "")
+def get_ai_response(prompt):
+    """Get contextual response from OpenAI"""
+    try:
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "system", "content": "You're a helpful government scheme assistant. Provide concise, accurate information about Indian government schemes."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.7
+        )
+        return response.choices[0].message['content']
+    except Exception as e:
+        logger.error(f"AI Error: {str(e)}")
+        return None
 
 @app.route("/")
 def index():
     return render_template("index.html")
 
-@app.route("/chat", methods=['POST'])
+@app.route("/api/chat", methods=['POST'])
 def chatbot():
-    data = request.get_json()
-    incoming_msg = data.get('message', '').strip()
-    sender = data.get('sender', 'default_user')
-    response_text = ""
-
-    if sender not in user_data:
-        user_data[sender] = {'step': 0, 'eligible_schemes': []}
-
-    step = user_data[sender]['step']
-
-    if step == 0:
-        response_text = "🙏 வணக்கம்! I’ll help you check eligibility for govt schemes. Shall we begin? (Yes/No)"
-        user_data[sender]['step'] = 1
-
-    elif step == 1:
-        if 'yes' in incoming_msg.lower():
-            response_text = "📌 Please tell me your age (in years):"
-            user_data[sender]['step'] = 2
+    try:
+        data = request.get_json()
+        incoming_msg = data.get('message', '').strip()
+        sender_id = data.get('sender', str(uuid.uuid4()))
+        
+        # Initialize or retrieve session
+        if sender_id not in user_sessions:
+            user_sessions[sender_id] = {
+                "step": 0,
+                "context": {},
+                "created_at": datetime.now(),
+                "last_active": datetime.now()
+            }
+        
+        session = user_sessions[sender_id]
+        session['last_active'] = datetime.now()
+        
+        # Determine response
+        if session['step'] == 0:
+            response = {
+                "text": "Welcome to the Government Scheme Assistant! Would you like to:\n1. Check eligibility\n2. Browse schemes\n3. Get application help",
+                "quick_replies": [
+                    {"title": "Check Eligibility", "payload": "eligibility"},
+                    {"title": "Browse Schemes", "payload": "browse"},
+                    {"title": "Get Help", "payload": "help"}
+                ]
+            }
+            session['step'] = 1
+        
+        elif session['step'] == 1:
+            if "eligibility" in incoming_msg.lower():
+                response = {
+                    "text": "Let's check your eligibility. What is your age in years?",
+                    "quick_replies": [
+                        {"title": "Under 18", "payload": "under_18"},
+                        {"title": "18-30", "payload": "18_30"},
+                        {"title": "31-45", "payload": "31_45"},
+                        {"title": "46-60", "payload": "46_60"},
+                        {"title": "60+", "payload": "60_plus"}
+                    ]
+                }
+                session['step'] = 2
+            elif "browse" in incoming_msg.lower():
+                schemes = list(scheme_database.keys())[:5]
+                response = {
+                    "text": "Here are some key government schemes:\n\n" +
+                            "\n".join([f"• {name}: {scheme_database[name]['benefits']}" for name in schemes]),
+                    "quick_replies": [{"title": name, "payload": f"details_{name}"} for name in schemes] +
+                                    [{"title": "See More", "payload": "more_schemes"}]
+                }
+            else:
+                response = {
+                    "text": get_ai_response(incoming_msg) or "I can help with government schemes. Please ask about eligibility, benefits, or application process.",
+                    "quick_replies": [
+                        {"title": "Check Eligibility", "payload": "eligibility"},
+                        {"title": "Browse Schemes", "payload": "browse"}
+                    ]
+                }
+        
+        elif session['step'] == 2:  # Age
+            try:
+                age = int(''.join(filter(str.isdigit, incoming_msg)))
+                session['context']['age'] = age
+                response = {
+                    "text": "What is your approximate annual family income in ₹?",
+                    "quick_replies": [
+                        {"title": "Under 1L", "payload": "income_1L"},
+                        {"title": "1L-3L", "payload": "income_1_3L"},
+                        {"title": "3L-5L", "payload": "income_3_5L"},
+                        {"title": "5L-10L", "payload": "income_5_10L"},
+                        {"title": "10L+", "payload": "income_10L_plus"}
+                    ]
+                }
+                session['step'] = 3
+            except:
+                response = {"text": "Please enter a valid age number (e.g., 25)"}
+        
+        elif session['step'] == 3:  # Income
+            session['context']['income'] = incoming_msg
+            response = {
+                "text": "What is your occupation?",
+                "quick_replies": [
+                    {"title": "Farmer", "payload": "occupation_farmer"},
+                    {"title": "Student", "payload": "occupation_student"},
+                    {"title": "Business", "payload": "occupation_business"},
+                    {"title": "Unemployed", "payload": "occupation_unemployed"},
+                    {"title": "Other", "payload": "occupation_other"}
+                ]
+            }
+            session['step'] = 4
+        
+        elif session['step'] == 4:  # Occupation
+            session['context']['occupation'] = incoming_msg.lower()
+            response = {
+                "text": "Which state do you reside in?",
+                "quick_replies": [
+                    {"title": "Tamil Nadu", "payload": "state_tn"},
+                    {"title": "Other State", "payload": "state_other"}
+                ]
+            }
+            session['step'] = 5
+        
+        elif session['step'] == 5:  # State
+            session['context']['state'] = "Tamil Nadu" if "tamil" in incoming_msg.lower() else "Other"
+            
+            # Find eligible schemes
+            eligible_schemes = []
+            for name, data in scheme_database.items():
+                eligible = True
+                
+                # Check age
+                if data['eligibility'].get('min_age') and session['context'].get('age', 0) < data['eligibility']['min_age']:
+                    eligible = False
+                
+                # Check income
+                if data['eligibility'].get('income_max') and session['context'].get('income', '').startswith(('income_3', 'income_5', 'income_10')) and data['eligibility']['income_max'] < 300000:
+                    eligible = False
+                
+                # Check occupation
+                if data['eligibility'].get('occupation') and session['context'].get('occupation') not in data['eligibility']['occupation']:
+                    eligible = False
+                
+                # Check state
+                if data['eligibility'].get('state') and session['context'].get('state') != data['eligibility']['state']:
+                    eligible = False
+                
+                if eligible:
+                    eligible_schemes.append(name)
+            
+            if eligible_schemes:
+                response_text = "Based on your profile, you may be eligible for:\n\n" + \
+                                "\n".join([f"• {name}: {scheme_database[name]['benefits']}" for name in eligible_schemes[:5]])
+                
+                if len(eligible_schemes) > 5:
+                    response_text += "\n\n...and more"
+                
+                response = {
+                    "text": response_text,
+                    "quick_replies": [{"title": name, "payload": f"details_{name}"} for name in eligible_schemes[:5]] +
+                                      [{"title": "Start Over", "payload": "start_over"}]
+                }
+            else:
+                response = {
+                    "text": "No schemes found matching your profile. Try adjusting your criteria or browse all schemes.",
+                    "quick_replies": [
+                        {"title": "Browse All Schemes", "payload": "browse"},
+                        {"title": "Start Over", "payload": "start_over"}
+                    ]
+                }
+            session['step'] = 6
+        
+        elif session['step'] == 6 and incoming_msg.startswith("details_"):
+            scheme_name = incoming_msg[8:]
+            if scheme_name in scheme_database:
+                scheme = scheme_database[scheme_name]
+                response = {
+                    "text": f"📋 {scheme_name}\n\nBenefits: {scheme['benefits']}\n\nEligibility:\n" +
+                            "\n".join([f"• {key}: {value}" for key, value in scheme['eligibility'].items()]) +
+                            f"\n\nApplication Steps:\n{scheme['steps']}",
+                    "buttons": [{"title": "Apply Online", "url": scheme['link']}],
+                    "quick_replies": [
+                        {"title": "Check Another Scheme", "payload": "browse"},
+                        {"title": "Start Over", "payload": "start_over"}
+                    ]
+                }
+            else:
+                response = {"text": "Scheme not found. Please try another one."}
+        
         else:
-            response_text = "Okay. Type 'Hi' anytime to start again."
-            user_data[sender]['step'] = 0
+            response = {
+                "text": "I didn't understand that. Type 'help' for options or 'start over' to begin again.",
+                "quick_replies": [
+                    {"title": "Help", "payload": "help"},
+                    {"title": "Start Over", "payload": "start_over"}
+                ]
+            }
 
-    elif step == 2:
-        try:
-            user_data[sender]['age'] = int(incoming_msg)
-            response_text = "💰 What is your monthly family income (in ₹)?"
-            user_data[sender]['step'] = 3
-        except ValueError:
-            response_text = "❗ Please enter a valid number for age."
+        return jsonify(response)
 
-    elif step == 3:
-        try:
-            user_data[sender]['income'] = int(incoming_msg.replace("₹", "").replace(",", "").strip())
-            response_text = "🏷️ Caste? (SC/ST/OBC/General):"
-            user_data[sender]['step'] = 4
-        except ValueError:
-            response_text = "❗ Please enter a valid number for income."
+    except Exception as e:
+        logger.error(f"Chatbot error: {str(e)}")
+        return jsonify({"text": "An error occurred. Please try again later."}), 500
 
-    elif step == 4:
-        user_data[sender]['caste'] = incoming_msg.upper()
-        response_text = "📍 State and District? (e.g., Tamil Nadu, Thanjavur):"
-        user_data[sender]['step'] = 5
-
-    elif step == 5:
-        user_data[sender]['location'] = incoming_msg
-        response_text = "👩‍🌾 Occupation? (Farmer/Student/Widow/Unemployed/etc.):"
-        user_data[sender]['step'] = 6
-
-    elif step == 6:
-        user_data[sender]['occupation'] = incoming_msg
-        age = user_data[sender]['age']
-        income = user_data[sender]['income']
-        caste = user_data[sender]['caste']
-        occ = user_data[sender]['occupation'].lower()
-        state = user_data[sender]['location'].lower()
-
-        eligible = []
-        schemes = respond("🎯 Based on your profile, you may be eligible for:\n\n", "🎯 உங்கள் விவரங்களைப் பொறுத்து, நீங்கள் பெறக்கூடிய திட்டங்கள்:\n\n")
-
-        if occ == 'farmer':
-            eligible += ["PM-KISAN", "PMAY Gramin"]
-            schemes += respond("🌾 PM-KISAN: ₹6000/year support to farmers.\n", "🌾 PM-KISAN: ஆண்டுக்கு ₹6000 நிலத்தடி விவசாயிகளுக்காக.\n")
-            schemes += respond("🏠 PMAY Gramin: Rural housing subsidy up to ₹1.2 lakh.\n", "🏠 கிராமப்புற வீட்டு மானியம் ₹1.2 லட்சம் வரை.\n")
-            if "tamil nadu" in state:
-                eligible.append("Uzhavar Pathukappu Thittam")
-                schemes += respond("🌱 Uzhavar Pathukappu Thittam: Farmer insurance + aid in TN.\n", "🌱 உழவர் பாதுகாப்புத் திட்டம்: விவசாயிகளுக்கான பாதுகாப்பு.\n")
-
-        if age >= 60:
-            eligible.append("Old Age Pension")
-            schemes += respond("👵 Old Age Pension: ₹200–₹500/month for senior citizens.\n", "👵 மூப்புப் பென்ஷன் ₹200–₹500 மாதம்.\n")
-
-        if occ == 'widow':
-            eligible.append("Widow Pension Scheme")
-            schemes += respond("👩‍🦳 Widow Pension: ₹300–₹500/month support.\n", "👩‍🦳 விதவை பென்ஷன் ₹300–₹500 மாதம்.\n")
-            if "tamil nadu" in state:
-                eligible.append("Destitute Women Pension")
-                schemes += respond("👩‍🦳 Destitute Women Pension: ₹1000/month for TN deserted/divorced women.\n", "👩‍🦳 விதவை/தொழிலிழந்த பெண்களுக்கு ₹1000 உதவித் தொகை.\n")
-
-        if occ == 'unemployed' and age <= 30:
-            eligible.append("PMEGP Loan")
-            schemes += respond("🧑‍💻 PMEGP Loan: Business loan + subsidy.\n", "🧑‍💻 PMEGP: தொழில் தொடங்க கடன் + மானியம்.\n")
-            eligible.append("National Apprenticeship Promotion Scheme")
-            schemes += respond("🛠️ NAPS: Skill training + stipend.\n", "🛠️ தேசிய பயிற்சி ஊக்கத்திட்டம்.\n")
-
-        if caste in ['SC', 'ST']:
-            eligible.append("SC/ST Scholarships")
-            schemes += respond("🏫 SC/ST Scholarships: Central/state education aid.\n", "🏫 SC/ST கல்வி உதவித்தொகை.\n")
-
-        if caste == 'OBC':
-            eligible.append("OBC Scholarships")
-            schemes += respond("📘 OBC Scholarships: For school/college students.\n", "📘 OBC கல்வி உதவித்தொகை.\n")
-
-        if income < 15000:
-            eligible.append("Ayushman Bharat")
-            schemes += respond("🏥 Ayushman Bharat (PMJAY): ₹5L health insurance.\n", "🏥 ஆயுஷ்மான் பாரத்: ₹5 லட்சம் மருத்துவ காப்பீடு.\n")
-
-        if occ == 'student' and age <= 25:
-            eligible.append("NMMS")
-            schemes += respond("🎓 NMMS: Monthly stipend for school students.\n", "🎓 NMMS: பள்ளி மாணவர்களுக்கு மாத உதவித்தொகை.\n")
-
-        if "tamil nadu" in state:
-            eligible += ["Kalaignar Magalir Urimai Thogai", "Free Laptop Scheme", "CMCHIS"]
-            schemes += respond("🧕 Kalaignar Magalir Urimai Thogai: ₹1000/month for women heads.\n", "🧕 மகளிர் உரிமை தொகை ₹1000 மாதம்.\n")
-            schemes += respond("🎓 Free Laptop Scheme: Govt students in Class 11/College.\n", "🎓 இலவச லாப்டாப் அரசு பள்ளி/கல்லூரிக்கு.\n")
-            schemes += respond("🛏️ CMCHIS: TN health insurance ₹5L/year.\n", "🛏️ முதல்வரின் மருத்துவ காப்பீடு ₹5 லட்சம்.\n")
-
-        user_data[sender]['eligible_schemes'] = eligible
-        schemes += "\n📥 Would you like steps to apply for any of these? (Yes/No)"
-        response_text = schemes.strip()
-        user_data[sender]['step'] = 7
-
-    elif step == 7:
-        if 'yes' in incoming_msg.lower():
-            response_text = "✍️ Please type the name of the scheme you'd like to apply for (e.g., PM-KISAN):"
-            user_data[sender]['step'] = 8
-        else:
-            response_text = "✅ Okay. You can type 'Hi' anytime to check again."
-            user_data[sender]['step'] = 0
-
-    elif step == 8:
-        scheme = incoming_msg.strip().upper()
-        matched = None
-        for key in scheme_steps:
-            if key.lower() in scheme.lower():
-                matched = key
-                break
-
-        if matched:
-            response_text = f"📝 Steps to apply for {matched}:\n{scheme_steps[matched]}"
-        else:
-            response_text = "❗ Sorry, I don’t have steps for that scheme yet. Try another or type 'Hi' to restart."
-        user_data[sender]['step'] = 0
-
-    return jsonify({"reply": response_text})
+@app.route("/api/schemes", methods=['GET'])
+def list_schemes():
+    """API endpoint to list all schemes"""
+    return jsonify({
+        "central_schemes": [name for name, data in scheme_database.items() if not data['eligibility'].get('state')],
+        "tn_schemes": [name for name, data in scheme_database.items() if data['eligibility'].get('state') == "Tamil Nadu"]
+    })
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(host='0.0.0.0', port=5000, debug=True)
