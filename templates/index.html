@@ -2,119 +2,627 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Govt Scheme Bot</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GovScheme Assistant | AI-Powered Scheme Finder</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body {
-            background: url('C:/Users/vaish/Downloads/govt_scheme_bot/static/flag.jpg') no-repeat center center fixed;
-            background-size: cover;
-            font-family: 'Segoe UI', sans-serif;
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --secondary: #f8fafc;
+            --text: #1e293b;
+            --text-light: #64748b;
+            --bg: #ffffff;
+            --card-bg: #f1f5f9;
+            --bot-bubble: #e0e7ff;
+            --user-bubble: #2563eb;
+            --error: #dc2626;
+        }
+
+        * {
             margin: 0;
             padding: 0;
-            color: #000;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
         }
 
-        .chatbox {
-            background: rgba(255, 255, 255, 0.95);
-            max-width: 520px;
-            margin: 60px auto;
-            padding: 30px;
-            border-radius: 20px;
-            box-shadow: 0 0 25px rgba(0, 0, 0, 0.25);
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
         }
 
-        h1 {
-            text-align: center;
-            color: #002868;
+        .header {
+            background-color: var(--primary);
+            color: white;
+            padding: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            z-index: 10;
         }
 
-        #chat {
-            height: 300px;
+        .header-icon {
+            background-color: rgba(255, 255, 255, 0.2);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .header-title {
+            flex-grow: 1;
+        }
+
+        .header-title h1 {
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .header-title p {
+            font-size: 0.7rem;
+            opacity: 0.8;
+        }
+
+        .chat-container {
+            flex: 1;
             overflow-y: auto;
-            border: 1px solid #ccc;
-            padding: 12px;
-            background: #f9f9f9;
-            border-radius: 10px;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            background-color: var(--secondary);
         }
 
-        #userInput {
-            width: 75%;
-            padding: 10px;
-            margin-top: 12px;
-            border-radius: 5px;
-            border: 1px solid #bbb;
+        .message {
+            max-width: 80%;
+            padding: 0.75rem 1rem;
+            border-radius: 1rem;
+            position: relative;
+            animation: fadeIn 0.3s ease;
         }
 
-        #sendBtn {
-            padding: 10px 15px;
-            background-color: #007bff;
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .bot-message {
+            align-self: flex-start;
+            background-color: var(--bot-bubble);
+            border-bottom-left-radius: 0.25rem;
+            color: var(--text);
+        }
+
+        .user-message {
+            align-self: flex-end;
+            background-color: var(--user-bubble);
+            color: white;
+            border-bottom-right-radius: 0.25rem;
+        }
+
+        .typing-indicator {
+            align-self: flex-start;
+            background-color: var(--bot-bubble);
+            padding: 0.75rem 1rem;
+            border-radius: 1rem;
+            display: flex;
+            gap: 0.5rem;
+            width: fit-content;
+        }
+
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            background-color: var(--text-light);
+            border-radius: 50%;
+            animation: typingAnimation 1.4s infinite ease-in-out;
+        }
+
+        .typing-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typingAnimation {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-5px); }
+        }
+
+        .quick-replies {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            padding: 0 1rem 1rem;
+        }
+
+        .quick-reply {
+            background-color: var(--card-bg);
+            border: none;
+            border-radius: 1.5rem;
+            padding: 0.5rem 1rem;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .quick-reply:hover {
+            background-color: #e2e8f0;
+        }
+
+        .input-area {
+            padding: 1rem;
+            background-color: var(--bg);
+            border-top: 1px solid #e2e8f0;
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .input-field {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 2rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .input-field:focus {
+            border-color: var(--primary);
+        }
+
+        .send-button {
+            background-color: var(--primary);
             color: white;
             border: none;
-            border-radius: 5px;
-            margin-top: 12px;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             cursor: pointer;
+            transition: background-color 0.2s;
         }
 
-        #sendBtn:hover {
-            background-color: #0056b3;
+        .send-button:hover {
+            background-color: var(--primary-dark);
         }
 
-        .bot, .user {
-            margin: 10px 0;
-            padding: 10px 14px;
-            border-radius: 12px;
-            max-width: 80%;
+        .send-button:disabled {
+            background-color: #94a3b8;
+            cursor: not-allowed;
         }
 
-        .bot {
-            background-color: #e2ffe2;
-            color: #003300;
+        .file-button {
+            background: none;
+            border: none;
+            color: var(--text-light);
+            cursor: pointer;
+            font-size: 1.25rem;
+            position: relative;
         }
 
-        .user {
-            background-color: #d4e7ff;
-            color: #002080;
-            text-align: right;
-            margin-left: auto;
+        .scheme-card {
+            background-color: white;
+            border-radius: 0.75rem;
+            padding: 1rem;
+            margin-top: 0.5rem;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            border-left: 4px solid var(--primary);
+        }
+
+        .scheme-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .scheme-title {
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .scheme-category {
+            font-size: 0.7rem;
+            background: #e0e7ff;
+            color: var(--primary);
+            padding: 0.25rem 0.5rem;
+            border-radius: 1rem;
+        }
+
+        .scheme-section {
+            margin: 0.75rem 0;
+        }
+
+        .scheme-subtitle {
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-bottom: 0.25rem;
+            display: flex;
+            align-items: center;
+        }
+
+        .scheme-subtitle:before {
+            content: "";
+            display: inline-block;
+            width: 6px;
+            height: 6px;
+            background: var(--primary);
+            border-radius: 50%;
+            margin-right: 0.5rem;
+        }
+
+        .scheme-content {
+            font-size: 0.85rem;
+            color: var(--text-light);
+        }
+
+        .scheme-steps {
+            font-size: 0.85rem;
+            color: var(--text-light);
+            white-space: pre-line;
+            margin-left: 1rem;
+        }
+
+        .apply-button {
+            display: inline-block;
+            background-color: var(--primary);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            text-decoration: none;
+            font-size: 0.85rem;
+            margin-top: 0.5rem;
+            transition: background-color 0.2s;
+        }
+
+        .apply-button:hover {
+            background-color: var(--primary-dark);
+        }
+
+        .error-message {
+            color: var(--error);
+            background-color: #fee2e2;
+            padding: 0.75rem 1rem;
+            border-radius: 1rem;
+        }
+
+        .eligibility-list {
+            list-style-type: disc;
+            padding-left: 1.5rem;
+            font-size: 0.85rem;
+            color: var(--text-light);
+        }
+
+        @media (max-width: 768px) {
+            .message {
+                max-width: 90%;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="chatbox">
-        <h1>Indian Government Scheme Bot</h1>
-        <div id="chat">
-            <div class="bot">🙏 Namaste! Type 'Hi' to begin.</div>
+    <header class="header">
+        <div class="header-icon">
+            <i class="fas fa-landmark"></i>
         </div>
-        <input type="text" id="userInput" placeholder="Type your message here..." />
-        <button id="sendBtn">Send</button>
+        <div class="header-title">
+            <h1>GovScheme Assistant</h1>
+            <p>AI-Powered Government Scheme Finder</p>
+        </div>
+        <button class="file-button" id="helpButton">
+            <i class="fas fa-question-circle"></i>
+        </button>
+    </header>
+
+    <main class="chat-container" id="chatContainer">
+        <!-- Messages will be inserted here by JavaScript -->
+    </main>
+
+    <div class="quick-replies" id="quickRepliesContainer">
+        <!-- Quick replies will be inserted here by JavaScript -->
+    </div>
+
+    <div class="input-area">
+        <button class="file-button" id="fileButton">
+            <i class="fas fa-paperclip"></i>
+            <input type="file" id="fileInput" style="display: none;">
+        </button>
+        <input type="text" class="input-field" id="messageInput" placeholder="Type your message..." autocomplete="off">
+        <button class="send-button" id="sendButton" disabled>
+            <i class="fas fa-paper-plane"></i>
+        </button>
     </div>
 
     <script>
-        const chatBox = document.getElementById("chat");
-        const userInput = document.getElementById("userInput");
-        const sendBtn = document.getElementById("sendBtn");
-        const sender = "user_" + Math.floor(Math.random() * 100000);
+        document.addEventListener('DOMContentLoaded', function() {
+            const chatContainer = document.getElementById('chatContainer');
+            const messageInput = document.getElementById('messageInput');
+            const sendButton = document.getElementById('sendButton');
+            const quickRepliesContainer = document.getElementById('quickRepliesContainer');
+            const fileButton = document.getElementById('fileButton');
+            const fileInput = document.getElementById('fileInput');
+            const helpButton = document.getElementById('helpButton');
 
-        function appendMessage(type, text) {
-            const div = document.createElement("div");
-            div.className = type;
-            div.textContent = text;
-            chatBox.appendChild(div);
-            chatBox.scrollTop = chatBox.scrollHeight;
-        }
+            let sessionId = 'session-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+            let isWaitingForResponse = false;
 
-        sendBtn.onclick = function () {
-            const text = userInput.value.trim();
-            if (!text) return;
-            appendMessage("user", text);
-            fetch("/chat", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ message: text, sender })
-            })
-            .then(res => res.json())
-            .then(data => appendMessage("bot", data.reply));
-            userInput.value = "";
-        };
+            // Initial welcome message
+            addBotMessage(
+                "🤖 Welcome to the Government Scheme Assistant! I can help you:\n" +
+                "• Check eligibility for Central & TN Government schemes\n" +
+                "• Find relevant benefits\n" +
+                "• Guide through applications\n\n" +
+                "Would you like to begin?",
+                [
+                    { title: "Check Eligibility", payload: "eligibility" },
+                    { title: "Browse Schemes", payload: "browse" }
+                ]
+            );
+
+            // Input field handling
+            messageInput.addEventListener('input', function() {
+                sendButton.disabled = messageInput.value.trim() === '' || isWaitingForResponse;
+            });
+
+            messageInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter' && !sendButton.disabled) {
+                    sendMessage();
+                }
+            });
+
+            sendButton.addEventListener('click', sendMessage);
+
+            // File upload handling
+            fileButton.addEventListener('click', function() {
+                fileInput.click();
+            });
+
+            fileInput.addEventListener('change', function(e) {
+                if (e.target.files.length > 0) {
+                    const file = e.target.files[0];
+                    addUserMessage(`[FILE] ${file.name}`);
+                    showTypingIndicator();
+                    
+                    // In a real app, you would upload the file to your server here
+                    setTimeout(() => {
+                        hideTypingIndicator();
+                        addBotMessage(
+                            "✅ I've received your document. Please tell me what you'd like to do next.",
+                            [
+                                { title: "Check eligibility", payload: "check_eligibility" },
+                                { title: "Find schemes", payload: "find_schemes" }
+                            ]
+                        );
+                    }, 1500);
+                }
+            });
+
+            // Help button
+            helpButton.addEventListener('click', function() {
+                addBotMessage(
+                    "ℹ️ **Help Guide**\n\n" +
+                    "1. **Eligibility Check**: Answer a few questions to find schemes you qualify for\n" +
+                    "2. **Scheme Browser**: View all available government schemes\n" +
+                    "3. **Document Upload**: Submit documents for verification\n\n" +
+                    "Just type what you need help with!"
+                );
+            });
+
+            function sendMessage() {
+                const message = messageInput.value.trim();
+                if (message === '' || isWaitingForResponse) return;
+
+                addUserMessage(message);
+                messageInput.value = '';
+                sendButton.disabled = true;
+                showTypingIndicator();
+                clearQuickReplies();
+
+                // Call backend API
+                fetch('/api/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        message: message,
+                        sender: sessionId
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    hideTypingIndicator();
+                    if (data.text) {
+                        // Check if this is a scheme details message
+                        if (data.text.includes('📋')) {
+                            const schemeMatch = data.text.match(/📋 (.+?)\n/);
+                            if (schemeMatch && schemeMatch[1]) {
+                                const schemeName = schemeMatch[1];
+                                const schemeText = data.text.replace(/📋 (.+?)\n/, '');
+                                addSchemeDetails(schemeName, schemeText, data.buttons);
+                            } else {
+                                addBotMessage(data.text, data.quick_replies);
+                            }
+                        } else {
+                            addBotMessage(data.text, data.quick_replies);
+                        }
+                    }
+                })
+                .catch(error => {
+                    hideTypingIndicator();
+                    addBotMessage("⚠️ Sorry, I encountered an error. Please try again.");
+                    console.error('Error:', error);
+                });
+            }
+
+            function addUserMessage(text) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'message user-message';
+                messageDiv.textContent = text;
+                chatContainer.appendChild(messageDiv);
+                scrollToBottom();
+            }
+
+            function addBotMessage(text, quickReplies = []) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'message bot-message';
+                messageDiv.innerHTML = text.replace(/\n/g, '<br>');
+                chatContainer.appendChild(messageDiv);
+                scrollToBottom();
+
+                if (quickReplies && quickReplies.length > 0) {
+                    showQuickReplies(quickReplies);
+                }
+            }
+
+            function addSchemeDetails(schemeName, text, buttons = []) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'message bot-message';
+                
+                // Extract sections from the text
+                const benefitsMatch = text.match(/Benefits: (.+?)\n\n/);
+                const eligibilityMatch = text.match(/Eligibility:\n((.|\n)+?)\n\nApplication/);
+                const stepsMatch = text.match(/Application Steps:\n((.|\n)+?)(\n\n|$)/);
+                
+                let htmlContent = `
+                    <div class="scheme-card">
+                        <div class="scheme-header">
+                            <h3 class="scheme-title">${schemeName}</h3>
+                        </div>
+                `;
+                
+                if (benefitsMatch && benefitsMatch[1]) {
+                    htmlContent += `
+                        <div class="scheme-section">
+                            <h4 class="scheme-subtitle">Benefits</h4>
+                            <p class="scheme-content">${benefitsMatch[1]}</p>
+                        </div>
+                    `;
+                }
+                
+                if (eligibilityMatch && eligibilityMatch[1]) {
+                    htmlContent += `
+                        <div class="scheme-section">
+                            <h4 class="scheme-subtitle">Eligibility</h4>
+                            <ul class="eligibility-list">
+                                ${eligibilityMatch[1].trim().split('\n').map(item => 
+                                    `<li>${item.replace('• ', '')}</li>`
+                                ).join('')}
+                            </ul>
+                        </div>
+                    `;
+                }
+                
+                if (stepsMatch && stepsMatch[1]) {
+                    htmlContent += `
+                        <div class="scheme-section">
+                            <h4 class="scheme-subtitle">Application Steps</h4>
+                            <div class="scheme-steps">
+                                ${stepsMatch[1].trim().replace(/\n/g, '<br>')}
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                if (buttons && buttons.length > 0) {
+                    htmlContent += `
+                        <a href="${buttons[0].url}" target="_blank" class="apply-button">
+                            <i class="fas fa-external-link-alt"></i> ${buttons[0].title}
+                        </a>
+                    `;
+                }
+                
+                htmlContent += `</div>`;
+                messageDiv.innerHTML = htmlContent;
+                chatContainer.appendChild(messageDiv);
+                scrollToBottom();
+            }
+
+            function showQuickReplies(replies) {
+                clearQuickReplies();
+                replies.forEach(reply => {
+                    const button = document.createElement('button');
+                    button.className = 'quick-reply';
+                    button.textContent = reply.title;
+                    button.addEventListener('click', () => {
+                        addUserMessage(reply.title);
+                        showTypingIndicator();
+                        setTimeout(() => {
+                            fetch('/api/chat', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                },
+                                body: JSON.stringify({
+                                    message: reply.payload,
+                                    sender: sessionId
+                                })
+                            })
+                            .then(response => response.json())
+                            .then(data => {
+                                hideTypingIndicator();
+                                if (data.text.includes('📋')) {
+                                    const schemeMatch = data.text.match(/📋 (.+?)\n/);
+                                    if (schemeMatch && schemeMatch[1]) {
+                                        const schemeName = schemeMatch[1];
+                                        const schemeText = data.text.replace(/📋 (.+?)\n/, '');
+                                        addSchemeDetails(schemeName, schemeText, data.buttons);
+                                    }
+                                } else {
+                                    addBotMessage(data.text, data.quick_replies);
+                                }
+                            });
+                        }, 300);
+                    });
+                    quickRepliesContainer.appendChild(button);
+                });
+            }
+
+            function showTypingIndicator() {
+                isWaitingForResponse = true;
+                sendButton.disabled = true;
+                
+                const typingDiv = document.createElement('div');
+                typingDiv.className = 'typing-indicator';
+                typingDiv.id = 'typingIndicator';
+                typingDiv.innerHTML = `
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                `;
+                chatContainer.appendChild(typingDiv);
+                scrollToBottom();
+            }
+
+            function hideTypingIndicator() {
+                isWaitingForResponse = false;
+                const typingDiv = document.getElementById('typingIndicator');
+                if (typingDiv) {
+                    typingDiv.remove();
+                }
+            }
+
+            function clearQuickReplies() {
+                quickRepliesContainer.innerHTML = '';
+            }
+
+            function scrollToBottom() {
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+            }
+        });
     </script>
 </body>
 </html>
