@@ -4,12 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GovScheme Assistant | AI-Powered Scheme Finder</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
             --primary: #2563eb;
             --primary-dark: #1d4ed8;
+            --primary-light: #93c5fd;
             --secondary: #f8fafc;
             --text: #1e293b;
             --text-light: #64748b;
@@ -18,13 +19,22 @@
             --bot-bubble: #e0e7ff;
             --user-bubble: #2563eb;
             --error: #dc2626;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --rounded-sm: 0.25rem;
+            --rounded-md: 0.5rem;
+            --rounded-lg: 1rem;
+            --rounded-full: 9999px;
         }
 
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Inter', sans-serif;
+            font-family: 'Poppins', sans-serif;
         }
 
         body {
@@ -33,43 +43,64 @@
             height: 100vh;
             display: flex;
             flex-direction: column;
+            line-height: 1.5;
         }
 
+        /* Header Styles */
         .header {
-            background-color: var(--primary);
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
             color: white;
             padding: 1rem;
             display: flex;
             align-items: center;
             gap: 1rem;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            box-shadow: var(--shadow-md);
             z-index: 10;
+            position: relative;
         }
 
         .header-icon {
             background-color: rgba(255, 255, 255, 0.2);
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
+            width: 42px;
+            height: 42px;
+            border-radius: var(--rounded-full);
             display: flex;
             align-items: center;
             justify-content: center;
+            flex-shrink: 0;
         }
 
-        .header-title {
+        .header-content {
             flex-grow: 1;
         }
 
-        .header-title h1 {
-            font-size: 1.2rem;
+        .header-title {
+            font-size: 1.25rem;
             font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
         }
 
-        .header-title p {
+        .header-subtitle {
+            font-size: 0.75rem;
+            opacity: 0.9;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .header-badge {
+            background-color: rgba(255, 255, 255, 0.2);
+            padding: 0.25rem 0.5rem;
+            border-radius: var(--rounded-full);
             font-size: 0.7rem;
-            opacity: 0.8;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
         }
 
+        /* Chat Container */
         .chat-container {
             flex: 1;
             overflow-y: auto;
@@ -78,50 +109,53 @@
             flex-direction: column;
             gap: 1rem;
             background-color: var(--secondary);
+            background-image: radial-gradient(var(--primary-light) 1px, transparent 1px);
+            background-size: 20px 20px;
+            scroll-behavior: smooth;
         }
 
+        /* Message Styles */
         .message {
-            max-width: 80%;
+            max-width: 85%;
             padding: 0.75rem 1rem;
-            border-radius: 1rem;
+            border-radius: var(--rounded-lg);
             position: relative;
             animation: fadeIn 0.3s ease;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+            box-shadow: var(--shadow-sm);
+            word-wrap: break-word;
         }
 
         .bot-message {
             align-self: flex-start;
             background-color: var(--bot-bubble);
-            border-bottom-left-radius: 0.25rem;
+            border-bottom-left-radius: var(--rounded-sm);
             color: var(--text);
         }
 
         .user-message {
             align-self: flex-end;
-            background-color: var(--user-bubble);
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
             color: white;
-            border-bottom-right-radius: 0.25rem;
+            border-bottom-right-radius: var(--rounded-sm);
         }
 
+        /* Typing Indicator */
         .typing-indicator {
             align-self: flex-start;
             background-color: var(--bot-bubble);
             padding: 0.75rem 1rem;
-            border-radius: 1rem;
+            border-radius: var(--rounded-lg);
             display: flex;
             gap: 0.5rem;
             width: fit-content;
+            box-shadow: var(--shadow-sm);
         }
 
         .typing-dot {
             width: 8px;
             height: 8px;
             background-color: var(--text-light);
-            border-radius: 50%;
+            border-radius: var(--rounded-full);
             animation: typingAnimation 1.4s infinite ease-in-out;
         }
 
@@ -133,32 +167,40 @@
             animation-delay: 0.4s;
         }
 
-        @keyframes typingAnimation {
-            0%, 60%, 100% { transform: translateY(0); }
-            30% { transform: translateY(-5px); }
-        }
-
+        /* Quick Replies */
         .quick-replies {
             display: flex;
             flex-wrap: wrap;
             gap: 0.5rem;
             padding: 0 1rem 1rem;
+            position: sticky;
+            bottom: 0;
+            background-color: var(--bg);
+            border-top: 1px solid #e2e8f0;
+            z-index: 5;
         }
 
         .quick-reply {
             background-color: var(--card-bg);
             border: none;
-            border-radius: 1.5rem;
+            border-radius: var(--rounded-full);
             padding: 0.5rem 1rem;
             font-size: 0.85rem;
             cursor: pointer;
-            transition: background-color 0.2s;
+            transition: all 0.2s;
+            box-shadow: var(--shadow-sm);
         }
 
         .quick-reply:hover {
             background-color: #e2e8f0;
+            transform: translateY(-1px);
         }
 
+        .quick-reply:active {
+            transform: translateY(0);
+        }
+
+        /* Input Area */
         .input-area {
             padding: 1rem;
             background-color: var(--bg);
@@ -166,59 +208,64 @@
             display: flex;
             gap: 0.5rem;
             align-items: center;
+            position: sticky;
+            bottom: 0;
+            z-index: 10;
         }
 
         .input-field {
             flex: 1;
-            padding: 0.75rem 1rem;
+            padding: 0.75rem 1.25rem;
             border: 1px solid #e2e8f0;
-            border-radius: 2rem;
+            border-radius: var(--rounded-full);
             outline: none;
-            transition: border-color 0.2s;
+            transition: all 0.2s;
+            font-size: 0.95rem;
+            box-shadow: var(--shadow-sm);
         }
 
         .input-field:focus {
             border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
         }
 
-        .send-button {
-            background-color: var(--primary);
+        .action-button {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
             color: white;
             border: none;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
+            border-radius: var(--rounded-full);
+            width: 44px;
+            height: 44px;
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            transition: background-color 0.2s;
+            transition: all 0.2s;
+            box-shadow: var(--shadow-sm);
+            flex-shrink: 0;
         }
 
-        .send-button:hover {
-            background-color: var(--primary-dark);
+        .action-button:hover {
+            transform: scale(1.05);
         }
 
-        .send-button:disabled {
-            background-color: #94a3b8;
+        .action-button:active {
+            transform: scale(0.98);
+        }
+
+        .action-button:disabled {
+            background: #94a3b8;
             cursor: not-allowed;
+            transform: none;
         }
 
-        .file-button {
-            background: none;
-            border: none;
-            color: var(--text-light);
-            cursor: pointer;
-            font-size: 1.25rem;
-            position: relative;
-        }
-
+        /* Scheme Cards */
         .scheme-card {
             background-color: white;
-            border-radius: 0.75rem;
-            padding: 1rem;
-            margin-top: 0.5rem;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            border-radius: var(--rounded-lg);
+            padding: 1.25rem;
+            margin-top: 0.75rem;
+            box-shadow: var(--shadow-md);
             border-left: 4px solid var(--primary);
         }
 
@@ -226,89 +273,172 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.75rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #e2e8f0;
         }
 
         .scheme-title {
-            font-weight: 600;
+            font-size: 1.1rem;
             color: var(--primary);
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
         }
 
         .scheme-category {
-            font-size: 0.7rem;
-            background: #e0e7ff;
-            color: var(--primary);
+            font-size: 0.75rem;
+            background: var(--primary-light);
+            color: var(--primary-dark);
             padding: 0.25rem 0.5rem;
-            border-radius: 1rem;
+            border-radius: var(--rounded-full);
         }
 
         .scheme-section {
-            margin: 0.75rem 0;
+            margin: 1rem 0;
         }
 
         .scheme-subtitle {
-            font-weight: 600;
             font-size: 0.9rem;
-            margin-bottom: 0.25rem;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 0.5rem;
             display: flex;
             align-items: center;
+            gap: 0.5rem;
         }
 
-        .scheme-subtitle:before {
-            content: "";
-            display: inline-block;
-            width: 6px;
-            height: 6px;
-            background: var(--primary);
-            border-radius: 50%;
-            margin-right: 0.5rem;
+        .scheme-subtitle i {
+            color: var(--primary);
+            font-size: 0.8rem;
         }
 
         .scheme-content {
             font-size: 0.85rem;
             color: var(--text-light);
+            line-height: 1.6;
         }
 
         .scheme-steps {
             font-size: 0.85rem;
             color: var(--text-light);
-            white-space: pre-line;
-            margin-left: 1rem;
+            padding-left: 1.25rem;
         }
 
-        .apply-button {
-            display: inline-block;
-            background-color: var(--primary);
-            color: white;
-            padding: 0.5rem 1rem;
-            border-radius: 0.5rem;
-            text-decoration: none;
-            font-size: 0.85rem;
-            margin-top: 0.5rem;
-            transition: background-color 0.2s;
-        }
-
-        .apply-button:hover {
-            background-color: var(--primary-dark);
-        }
-
-        .error-message {
-            color: var(--error);
-            background-color: #fee2e2;
-            padding: 0.75rem 1rem;
-            border-radius: 1rem;
+        .scheme-steps li {
+            margin-bottom: 0.5rem;
         }
 
         .eligibility-list {
-            list-style-type: disc;
-            padding-left: 1.5rem;
+            list-style-type: none;
+            padding-left: 0;
             font-size: 0.85rem;
             color: var(--text-light);
         }
 
+        .eligibility-list li {
+            margin-bottom: 0.25rem;
+            display: flex;
+            align-items: flex-start;
+            gap: 0.5rem;
+        }
+
+        .eligibility-list li::before {
+            content: "•";
+            color: var(--primary);
+            font-weight: bold;
+        }
+
+        .apply-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            padding: 0.6rem 1.25rem;
+            border-radius: var(--rounded-md);
+            text-decoration: none;
+            font-size: 0.85rem;
+            margin-top: 0.75rem;
+            transition: all 0.2s;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .apply-button:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .apply-button:active {
+            transform: translateY(0);
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes typingAnimation {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-4px); }
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Utility Classes */
+        .text-muted {
+            color: var(--text-light);
+            font-size: 0.8rem;
+        }
+
+        .mt-1 { margin-top: 0.25rem; }
+        .mt-2 { margin-top: 0.5rem; }
+        .mt-3 { margin-top: 0.75rem; }
+        .mt-4 { margin-top: 1rem; }
+
+        /* Responsive Design */
         @media (max-width: 768px) {
             .message {
                 max-width: 90%;
+            }
+            
+            .header-title {
+                font-size: 1.1rem;
+            }
+            
+            .input-field {
+                padding: 0.75rem 1rem;
+            }
+        }
+
+        /* Dark Mode Support */
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --primary: #3b82f6;
+                --primary-dark: #2563eb;
+                --primary-light: #1e3a8a;
+                --secondary: #1e293b;
+                --text: #f8fafc;
+                --text-light: #94a3b8;
+                --bg: #0f172a;
+                --card-bg: #1e293b;
+                --bot-bubble: #334155;
+            }
+            
+            .input-field {
+                background-color: #1e293b;
+                color: white;
+                border-color: #334155;
+            }
+            
+            .scheme-card {
+                background-color: #1e293b;
+                border-left-color: var(--primary);
             }
         }
     </style>
@@ -318,30 +448,57 @@
         <div class="header-icon">
             <i class="fas fa-landmark"></i>
         </div>
-        <div class="header-title">
-            <h1>GovScheme Assistant</h1>
-            <p>AI-Powered Government Scheme Finder</p>
+        <div class="header-content">
+            <h1 class="header-title">
+                <span>GovScheme Assistant</span>
+                <span class="header-badge">
+                    <i class="fas fa-bolt"></i>
+                    <span>AI-Powered</span>
+                </span>
+            </h1>
+            <p class="header-subtitle">
+                <i class="fas fa-map-marker-alt"></i>
+                <span>Central & Tamil Nadu Schemes</span>
+            </p>
         </div>
-        <button class="file-button" id="helpButton">
-            <i class="fas fa-question-circle"></i>
+        <button class="action-button" id="helpButton" aria-label="Help">
+            <i class="fas fa-question"></i>
         </button>
     </header>
 
     <main class="chat-container" id="chatContainer">
-        <!-- Messages will be inserted here by JavaScript -->
+        <!-- Welcome Message -->
+        <div class="message bot-message">
+            <p>👋 Welcome to the <strong>Government Scheme Assistant</strong>!</p>
+            <p class="mt-2">I can help you discover and apply for government schemes from both Central Government and Tamil Nadu State.</p>
+            <p class="mt-2">Let's get started - would you like to:</p>
+            <ul class="scheme-steps mt-2">
+                <li>Check your eligibility</li>
+                <li>Browse available schemes</li>
+                <li>Get application guidance</li>
+            </ul>
+        </div>
     </main>
 
     <div class="quick-replies" id="quickRepliesContainer">
-        <!-- Quick replies will be inserted here by JavaScript -->
+        <button class="quick-reply" data-payload="eligibility">
+            <i class="fas fa-clipboard-check"></i> Check Eligibility
+        </button>
+        <button class="quick-reply" data-payload="browse">
+            <i class="fas fa-search"></i> Browse Schemes
+        </button>
+        <button class="quick-reply" data-payload="help">
+            <i class="fas fa-question-circle"></i> Get Help
+        </button>
     </div>
 
     <div class="input-area">
-        <button class="file-button" id="fileButton">
+        <button class="action-button" id="fileButton" aria-label="Attach file">
             <i class="fas fa-paperclip"></i>
-            <input type="file" id="fileInput" style="display: none;">
+            <input type="file" id="fileInput" style="display: none;" accept=".pdf,.jpg,.jpeg,.png">
         </button>
-        <input type="text" class="input-field" id="messageInput" placeholder="Type your message..." autocomplete="off">
-        <button class="send-button" id="sendButton" disabled>
+        <input type="text" class="input-field" id="messageInput" placeholder="Type your message..." autocomplete="off" aria-label="Type your message">
+        <button class="action-button" id="sendButton" disabled aria-label="Send message">
             <i class="fas fa-paper-plane"></i>
         </button>
     </div>
@@ -358,17 +515,18 @@
 
             let sessionId = 'session-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
             let isWaitingForResponse = false;
+            let isFirstMessage = true;
 
-            // Initial welcome message
+            // Initialize with welcome message
             addBotMessage(
-                "🤖 Welcome to the Government Scheme Assistant! I can help you:\n" +
-                "• Check eligibility for Central & TN Government schemes\n" +
-                "• Find relevant benefits\n" +
-                "• Guide through applications\n\n" +
-                "Would you like to begin?",
+                "I can help you with:\n\n" +
+                "• Checking eligibility for government schemes\n" +
+                "• Finding relevant benefits\n" +
+                "• Guiding through applications\n\n" +
+                "How can I assist you today?",
                 [
-                    { title: "Check Eligibility", payload: "eligibility" },
-                    { title: "Browse Schemes", payload: "browse" }
+                    { title: "Check Eligibility", payload: "eligibility", icon: "clipboard-check" },
+                    { title: "Browse Schemes", payload: "browse", icon: "search" }
                 ]
             );
 
@@ -393,17 +551,22 @@
             fileInput.addEventListener('change', function(e) {
                 if (e.target.files.length > 0) {
                     const file = e.target.files[0];
-                    addUserMessage(`[FILE] ${file.name}`);
+                    if (file.size > 5 * 1024 * 1024) { // 5MB limit
+                        addBotMessage("⚠️ File size should be less than 5MB. Please try again.");
+                        return;
+                    }
+                    
+                    addUserMessage(`📎 ${file.name}`);
                     showTypingIndicator();
                     
-                    // In a real app, you would upload the file to your server here
+                    // In a real app, upload to server and get URL
                     setTimeout(() => {
                         hideTypingIndicator();
                         addBotMessage(
-                            "✅ I've received your document. Please tell me what you'd like to do next.",
+                            "✅ I've received your document. What would you like to do next?",
                             [
-                                { title: "Check eligibility", payload: "check_eligibility" },
-                                { title: "Find schemes", payload: "find_schemes" }
+                                { title: "Check Eligibility", payload: "check_eligibility", icon: "clipboard-check" },
+                                { title: "Find Schemes", payload: "find_schemes", icon: "search" }
                             ]
                         );
                     }, 1500);
@@ -413,12 +576,32 @@
             // Help button
             helpButton.addEventListener('click', function() {
                 addBotMessage(
-                    "ℹ️ **Help Guide**\n\n" +
-                    "1. **Eligibility Check**: Answer a few questions to find schemes you qualify for\n" +
-                    "2. **Scheme Browser**: View all available government schemes\n" +
-                    "3. **Document Upload**: Submit documents for verification\n\n" +
-                    "Just type what you need help with!"
+                    "ℹ️ <strong>Help Guide</strong>\n\n" +
+                    "1. <strong>Eligibility Check</strong>: Answer a few questions to find schemes you qualify for\n" +
+                    "2. <strong>Scheme Browser</strong>: View all available government schemes\n" +
+                    "3. <strong>Document Upload</strong>: Submit documents for verification\n\n" +
+                    "Just type what you need help with or use the quick reply buttons!",
+                    [
+                        { title: "Check Eligibility", payload: "eligibility", icon: "clipboard-check" },
+                        { title: "Browse Schemes", payload: "browse", icon: "search" }
+                    ]
                 );
+            });
+
+            // Quick reply buttons
+            quickRepliesContainer.addEventListener('click', function(e) {
+                if (e.target.classList.contains('quick-reply') || e.target.closest('.quick-reply')) {
+                    const button = e.target.classList.contains('quick-reply') ? e.target : e.target.closest('.quick-reply');
+                    const payload = button.dataset.payload;
+                    
+                    if (payload) {
+                        addUserMessage(button.textContent.trim());
+                        showTypingIndicator();
+                        setTimeout(() => {
+                            handleBotResponse(payload);
+                        }, 300);
+                    }
+                }
             });
 
             function sendMessage() {
@@ -442,7 +625,12 @@
                         sender: sessionId
                     })
                 })
-                .then(response => response.json())
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
                 .then(data => {
                     hideTypingIndicator();
                     if (data.text) {
@@ -452,12 +640,10 @@
                             if (schemeMatch && schemeMatch[1]) {
                                 const schemeName = schemeMatch[1];
                                 const schemeText = data.text.replace(/📋 (.+?)\n/, '');
-                                addSchemeDetails(schemeName, schemeText, data.buttons);
-                            } else {
-                                addBotMessage(data.text, data.quick_replies);
+                                addSchemeDetails(schemeName, schemeText, data.buttons || []);
                             }
                         } else {
-                            addBotMessage(data.text, data.quick_replies);
+                            addBotMessage(data.text, data.quick_replies || []);
                         }
                     }
                 })
@@ -471,7 +657,7 @@
             function addUserMessage(text) {
                 const messageDiv = document.createElement('div');
                 messageDiv.className = 'message user-message';
-                messageDiv.textContent = text;
+                messageDiv.innerHTML = `<p>${text.replace(/\n/g, '<br>')}</p>`;
                 chatContainer.appendChild(messageDiv);
                 scrollToBottom();
             }
@@ -479,7 +665,7 @@
             function addBotMessage(text, quickReplies = []) {
                 const messageDiv = document.createElement('div');
                 messageDiv.className = 'message bot-message';
-                messageDiv.innerHTML = text.replace(/\n/g, '<br>');
+                messageDiv.innerHTML = `<p>${text.replace(/\n/g, '<br>')}</p>`;
                 chatContainer.appendChild(messageDiv);
                 scrollToBottom();
 
@@ -500,14 +686,21 @@
                 let htmlContent = `
                     <div class="scheme-card">
                         <div class="scheme-header">
-                            <h3 class="scheme-title">${schemeName}</h3>
+                            <h3 class="scheme-title">
+                                <i class="fas fa-file-alt"></i>
+                                ${schemeName}
+                            </h3>
+                            <span class="scheme-category">${getSchemeCategory(schemeName)}</span>
                         </div>
                 `;
                 
                 if (benefitsMatch && benefitsMatch[1]) {
                     htmlContent += `
                         <div class="scheme-section">
-                            <h4 class="scheme-subtitle">Benefits</h4>
+                            <h4 class="scheme-subtitle">
+                                <i class="fas fa-gift"></i>
+                                Benefits
+                            </h4>
                             <p class="scheme-content">${benefitsMatch[1]}</p>
                         </div>
                     `;
@@ -516,7 +709,10 @@
                 if (eligibilityMatch && eligibilityMatch[1]) {
                     htmlContent += `
                         <div class="scheme-section">
-                            <h4 class="scheme-subtitle">Eligibility</h4>
+                            <h4 class="scheme-subtitle">
+                                <i class="fas fa-clipboard-check"></i>
+                                Eligibility
+                            </h4>
                             <ul class="eligibility-list">
                                 ${eligibilityMatch[1].trim().split('\n').map(item => 
                                     `<li>${item.replace('• ', '')}</li>`
@@ -529,17 +725,22 @@
                 if (stepsMatch && stepsMatch[1]) {
                     htmlContent += `
                         <div class="scheme-section">
-                            <h4 class="scheme-subtitle">Application Steps</h4>
-                            <div class="scheme-steps">
-                                ${stepsMatch[1].trim().replace(/\n/g, '<br>')}
-                            </div>
+                            <h4 class="scheme-subtitle">
+                                <i class="fas fa-list-ol"></i>
+                                Application Steps
+                            </h4>
+                            <ol class="scheme-steps">
+                                ${stepsMatch[1].trim().split('\n').map(step => 
+                                    `<li>${step.replace(/^\d+\.\s*/, '')}</li>`
+                                ).join('')}
+                            </ol>
                         </div>
                     `;
                 }
                 
                 if (buttons && buttons.length > 0) {
                     htmlContent += `
-                        <a href="${buttons[0].url}" target="_blank" class="apply-button">
+                        <a href="${buttons[0].url}" target="_blank" rel="noopener noreferrer" class="apply-button">
                             <i class="fas fa-external-link-alt"></i> ${buttons[0].title}
                         </a>
                     `;
@@ -551,42 +752,25 @@
                 scrollToBottom();
             }
 
+            function getSchemeCategory(schemeName) {
+                const scheme = scheme_database[schemeName];
+                return scheme ? scheme.category : "Government Scheme";
+            }
+
             function showQuickReplies(replies) {
                 clearQuickReplies();
+                
                 replies.forEach(reply => {
                     const button = document.createElement('button');
                     button.className = 'quick-reply';
-                    button.textContent = reply.title;
-                    button.addEventListener('click', () => {
-                        addUserMessage(reply.title);
-                        showTypingIndicator();
-                        setTimeout(() => {
-                            fetch('/api/chat', {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                },
-                                body: JSON.stringify({
-                                    message: reply.payload,
-                                    sender: sessionId
-                                })
-                            })
-                            .then(response => response.json())
-                            .then(data => {
-                                hideTypingIndicator();
-                                if (data.text.includes('📋')) {
-                                    const schemeMatch = data.text.match(/📋 (.+?)\n/);
-                                    if (schemeMatch && schemeMatch[1]) {
-                                        const schemeName = schemeMatch[1];
-                                        const schemeText = data.text.replace(/📋 (.+?)\n/, '');
-                                        addSchemeDetails(schemeName, schemeText, data.buttons);
-                                    }
-                                } else {
-                                    addBotMessage(data.text, data.quick_replies);
-                                }
-                            });
-                        }, 300);
-                    });
+                    button.dataset.payload = reply.payload;
+                    
+                    if (reply.icon) {
+                        button.innerHTML = `<i class="fas fa-${reply.icon}"></i> ${reply.title}`;
+                    } else {
+                        button.textContent = reply.title;
+                    }
+                    
                     quickRepliesContainer.appendChild(button);
                 });
             }
@@ -620,9 +804,48 @@
             }
 
             function scrollToBottom() {
-                chatContainer.scrollTop = chatContainer.scrollHeight;
+                setTimeout(() => {
+                    chatContainer.scrollTop = chatContainer.scrollHeight;
+                }, 100);
             }
+
+            function handleBotResponse(payload) {
+                hideTypingIndicator();
+                
+                // Call backend API with the payload
+                fetch('/api/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        message: payload,
+                        sender: sessionId,
+                        isQuickReply: true
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.text.includes('📋')) {
+                        const schemeMatch = data.text.match(/📋 (.+?)\n/);
+                        if (schemeMatch && schemeMatch[1]) {
+                            const schemeName = schemeMatch[1];
+                            const schemeText = data.text.replace(/📋 (.+?)\n/, '');
+                            addSchemeDetails(schemeName, schemeText, data.buttons || []);
+                        }
+                    } else {
+                        addBotMessage(data.text, data.quick_replies || []);
+                    }
+                });
+            }
+
+            // Auto-focus input field
+            messageInput.focus();
         });
+
+        // In a real app, you would have the actual scheme database from the backend
+        // This is just for frontend demonstration
+        const scheme_database = {};
     </script>
 </body>
 </html>
