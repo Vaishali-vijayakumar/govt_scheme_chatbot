@@ -4,696 +4,807 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Government Scheme Assistant</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         :root {
-            --primary: #2563eb;
-            --primary-dark: #1e40af;
-            --secondary: #10b981;
-            --light: #f8fafc;
-            --dark: #1e293b;
-            --gray: #64748b;
-            --light-gray: #e2e8f0;
-            --border-radius: 8px;
-            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --primary-color: #3498db;
+            --secondary-color: #2980b9;
+            --accent-color: #e74c3c;
+            --light-color: #ecf0f1;
+            --dark-color: #2c3e50;
+            --success-color: #2ecc71;
+            --warning-color: #f39c12;
         }
-
+        
         * {
+            box-sizing: border-box;
             margin: 0;
             padding: 0;
-            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
-
+        
         body {
-            font-family: 'Poppins', sans-serif;
-            background-color: #f1f5f9;
-            color: var(--dark);
+            background-color: #f5f5f5;
+            color: #333;
             line-height: 1.6;
         }
-
+        
         .container {
-            max-width: 1200px;
+            display: flex;
+            min-height: 100vh;
+            max-width: 1400px;
             margin: 0 auto;
-            padding: 20px;
         }
-
-        header {
+        
+        /* Left Panel - Scheme Browser */
+        .left-panel {
+            flex: 1;
             background-color: white;
-            box-shadow: var(--shadow);
-            padding: 20px 0;
-            margin-bottom: 30px;
+            padding: 20px;
+            border-right: 1px solid #ddd;
+            overflow-y: auto;
         }
-
-        .header-content {
+        
+        /* Right Panel - Chat Interface */
+        .right-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background-color: #f9f9f9;
+        }
+        
+        .panel-header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 15px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+        
+        /* Scheme Browser Styles */
+        .scheme-categories {
+            margin-top: 20px;
+        }
+        
+        .category {
+            margin-bottom: 20px;
+        }
+        
+        .category-title {
+            background-color: var(--dark-color);
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            cursor: pointer;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
-
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 10px;
+        
+        .category-title:hover {
+            background-color: #34495e;
         }
-
-        .logo img {
-            height: 40px;
+        
+        .scheme-list {
+            margin-top: 10px;
+            display: none;
         }
-
-        .logo h1 {
-            font-size: 1.5rem;
-            font-weight: 600;
-            color: var(--primary);
+        
+        .scheme-list.active {
+            display: block;
         }
-
-        .main {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 30px;
-        }
-
-        @media (min-width: 992px) {
-            .main {
-                grid-template-columns: 1fr 2fr;
-            }
-        }
-
-        /* Schemes Section */
-        .schemes-section {
-            background-color: white;
-            border-radius: var(--border-radius);
-            box-shadow: var(--shadow);
-            padding: 20px;
-            height: fit-content;
-        }
-
-        .section-title {
-            font-size: 1.25rem;
-            font-weight: 600;
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .filter-buttons {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-
-        .filter-btn {
-            background-color: var(--light-gray);
-            border: none;
-            border-radius: 20px;
-            padding: 8px 16px;
-            font-size: 0.875rem;
+        
+        .scheme-item {
+            background-color: var(--light-color);
+            padding: 10px;
+            margin-bottom: 5px;
+            border-radius: 5px;
             cursor: pointer;
             transition: all 0.3s ease;
         }
-
-        .filter-btn.active {
-            background-color: var(--primary);
-            color: white;
+        
+        .scheme-item:hover {
+            background-color: #d6eaf8;
+            transform: translateX(5px);
         }
-
-        .schemes-container {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 15px;
+        
+        .scheme-name {
+            font-weight: bold;
+            color: var(--secondary-color);
         }
-
-        /* Chat Section */
-        .chat-section {
-            background-color: white;
-            border-radius: var(--border-radius);
-            box-shadow: var(--shadow);
-            padding: 20px;
+        
+        .scheme-benefits {
+            font-size: 0.9rem;
+            color: #555;
+        }
+        
+        /* Chat Interface Styles */
+        .chat-container {
+            flex: 1;
             display: flex;
             flex-direction: column;
-            height: 80vh;
+            padding: 20px;
+            overflow-y: auto;
         }
-
+        
         .chat-header {
-            display: flex;
-            align-items: center;
-            gap: 10px;
+            text-align: center;
             margin-bottom: 20px;
             padding-bottom: 10px;
-            border-bottom: 1px solid var(--light-gray);
+            border-bottom: 1px solid #ddd;
         }
-
-        .chat-header h2 {
-            font-size: 1.25rem;
-            font-weight: 600;
-        }
-
-        .chat-header .badge {
-            background-color: var(--secondary);
-            color: white;
-            padding: 2px 8px;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: 500;
-        }
-
+        
         .chat-messages {
             flex: 1;
             overflow-y: auto;
-            padding: 10px;
             margin-bottom: 20px;
+        }
+        
+        .message {
+            margin-bottom: 15px;
+            max-width: 80%;
+        }
+        
+        .bot-message {
+            align-self: flex-start;
+            background-color: white;
+            padding: 10px 15px;
+            border-radius: 18px 18px 18px 0;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+        
+        .user-message {
+            align-self: flex-end;
+            background-color: var(--primary-color);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 18px 18px 0 18px;
+        }
+        
+        .quick-replies {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+        }
+        
+        .quick-reply {
+            background-color: var(--light-color);
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            padding: 8px 15px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .quick-reply:hover {
+            background-color: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+        
+        .chat-input-container {
+            display: flex;
+            padding: 10px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 -2px 5px rgba(0,0,0,0.05);
+        }
+        
+        .chat-input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            outline: none;
+            font-size: 1rem;
+        }
+        
+        .send-button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            margin-left: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .send-button:hover {
+            background-color: var(--secondary-color);
+        }
+        
+        /* Eligibility Section */
+        .eligibility-section {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .eligibility-title {
+            color: var(--primary-color);
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .eligibility-title i {
+            margin-right: 10px;
+        }
+        
+        .eligibility-form {
             display: flex;
             flex-direction: column;
             gap: 15px;
         }
-
-        .message {
-            max-width: 80%;
-            padding: 12px 16px;
-            border-radius: var(--border-radius);
-            line-height: 1.5;
-        }
-
-        .bot-message {
-            background-color: var(--light);
-            align-self: flex-start;
-            border-bottom-left-radius: 4px;
-        }
-
-        .user-message {
-            background-color: var(--primary);
-            color: white;
-            align-self: flex-end;
-            border-bottom-right-radius: 4px;
-        }
-
-        .quick-replies {
+        
+        .form-group {
             display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-top: 10px;
+            flex-direction: column;
         }
-
-        .quick-reply {
-            background-color: var(--light-gray);
-            border: none;
-            border-radius: 20px;
-            padding: 8px 16px;
-            font-size: 0.875rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .quick-reply:hover {
-            background-color: #d1d5db;
-        }
-
-        .chat-input {
-            display: flex;
-            gap: 10px;
-            padding-top: 10px;
-            border-top: 1px solid var(--light-gray);
-        }
-
-        .chat-input input {
-            flex: 1;
-            padding: 12px 16px;
-            border: 1px solid var(--light-gray);
-            border-radius: var(--border-radius);
-            font-size: 1rem;
-            outline: none;
-            transition: all 0.3s ease;
-        }
-
-        .chat-input input:focus {
-            border-color: var(--primary);
-            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
-        }
-
-        .chat-input button {
-            background-color: var(--primary);
-            color: white;
-            border: none;
-            border-radius: var(--border-radius);
-            padding: 0 20px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .chat-input button:hover {
-            background-color: var(--primary-dark);
-        }
-
-        /* Scheme Card */
-        .scheme-card {
-            background-color: white;
-            border-radius: var(--border-radius);
-            box-shadow: var(--shadow);
-            padding: 15px;
-            transition: all 0.3s ease;
-        }
-
-        .scheme-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-        }
-
-        .scheme-header {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 10px;
-        }
-
-        .scheme-title {
-            font-size: 1.1rem;
-            font-weight: 600;
-            color: var(--primary);
-        }
-
-        .scheme-category {
-            background-color: #e0f2fe;
-            color: #0369a1;
-            padding: 4px 10px;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: 500;
-        }
-
-        .scheme-benefits {
-            margin-bottom: 10px;
-            font-size: 0.9rem;
-        }
-
-        .eligibility-section {
-            background-color: var(--light);
-            border-radius: var(--border-radius);
-            padding: 10px;
-            margin: 10px 0;
-        }
-
-        .eligibility-title {
-            font-weight: 600;
-            font-size: 0.9rem;
-            margin-bottom: 8px;
-        }
-
-        .eligibility-list {
-            list-style-type: none;
-            font-size: 0.85rem;
-        }
-
-        .eligibility-item {
+        
+        .form-group label {
             margin-bottom: 5px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
+            font-weight: 500;
         }
-
-        .eligibility-item i {
-            color: var(--secondary);
-            font-size: 0.7rem;
+        
+        .form-group input, .form-group select {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
         }
-
-        .scheme-footer {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-top: 10px;
-            padding-top: 10px;
-            border-top: 1px solid var(--light-gray);
-        }
-
-        .apply-btn {
-            background-color: var(--secondary);
+        
+        .submit-button {
+            background-color: var(--success-color);
             color: white;
             border: none;
-            border-radius: var(--border-radius);
-            padding: 6px 12px;
-            font-size: 0.85rem;
-            font-weight: 500;
+            padding: 10px;
+            border-radius: 4px;
             cursor: pointer;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            gap: 6px;
+            font-weight: bold;
+            transition: background-color 0.2s ease;
+        }
+        
+        .submit-button:hover {
+            background-color: #27ae60;
+        }
+        
+        /* Eligible Schemes Display */
+        .eligible-schemes {
+            margin-top: 20px;
+        }
+        
+        .eligible-scheme {
+            background-color: #e8f8f0;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            border-left: 4px solid var(--success-color);
+        }
+        
+        .scheme-title {
+            font-weight: bold;
+            color: var(--dark-color);
+            margin-bottom: 5px;
+        }
+        
+        .scheme-benefit {
+            font-size: 0.9rem;
+            color: #555;
+            margin-bottom: 5px;
+        }
+        
+        .scheme-link {
+            display: inline-block;
+            margin-top: 10px;
+            color: var(--primary-color);
             text-decoration: none;
+            font-weight: 500;
         }
-
-        .apply-btn:hover {
-            background-color: #0d9488;
+        
+        .scheme-link:hover {
+            text-decoration: underline;
         }
-
-        .scheme-deadline {
-            font-size: 0.8rem;
-            color: var(--gray);
-        }
-
-        .loading {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-        }
-
-        .spinner {
-            width: 40px;
-            height: 40px;
-            border: 4px solid rgba(0, 0, 0, 0.1);
-            border-left-color: var(--primary);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-            to {
-                transform: rotate(360deg);
-            }
-        }
-
-        /* Responsive adjustments */
+        
+        /* Responsive Design */
         @media (max-width: 768px) {
-            .header-content {
+            .container {
                 flex-direction: column;
-                gap: 15px;
             }
             
-            .filter-buttons {
-                flex-wrap: wrap;
-                justify-content: center;
+            .left-panel {
+                border-right: none;
+                border-bottom: 1px solid #ddd;
+                max-height: 300px;
             }
         }
+        
+        /* Animation */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.3s ease forwards;
+        }
     </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <body>
-    <header>
-        <div class="container header-content">
-            <div class="logo">
-                <img src="https://cdn-icons-png.flaticon.com/512/2103/2103633.png" alt="Government Logo">
-                <h1>Scheme Assistant</h1>
+    <div class="container">
+        <!-- Left Panel - Scheme Browser -->
+        <div class="left-panel">
+            <div class="panel-header">
+                <i class="fas fa-list"></i> All Government Schemes
             </div>
-        </div>
-    </header>
-
-    <div class="container main">
-        <div class="schemes-section">
-            <h2 class="section-title"><i class="fas fa-list"></i> Available Schemes</h2>
-            <div class="filter-buttons">
-                <button class="filter-btn active" data-filter="all">All Schemes</button>
-                <button class="filter-btn" data-filter="central">Central</button>
-                <button class="filter-btn" data-filter="tn">Tamil Nadu</button>
-            </div>
-            <div id="schemes-container" class="schemes-container">
-                <div class="loading">
-                    <div class="spinner"></div>
+            
+            <div class="scheme-categories">
+                <div class="category">
+                    <div class="category-title" onclick="toggleCategory('central')">
+                        <span><i class="fas fa-flag"></i> Central Government Schemes</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="scheme-list" id="central-schemes">
+                        <!-- Central schemes will be loaded here -->
+                    </div>
                 </div>
-            </div>
-        </div>
-
-        <div class="chat-section">
-            <div class="chat-header">
-                <i class="fas fa-robot"></i>
-                <h2>Chat Assistant</h2>
-                <span class="badge">Online</span>
-            </div>
-            <div class="chat-messages" id="chat-messages">
-                <div class="message bot-message">
-                    <p>🌟 <strong>Welcome to Government Scheme Assistant!</strong> 🌟</p>
-                    <p>I can help you discover benefits you may qualify for. Choose an option:</p>
-                    <div class="quick-replies">
-                        <button class="quick-reply" data-payload="browse">🔍 Browse Schemes</button>
-                        <button class="quick-reply" data-payload="eligibility">✅ Check Eligibility</button>
-                        <button class="quick-reply" data-payload="help">ℹ️ Get Help</button>
+                
+                <div class="category">
+                    <div class="category-title" onclick="toggleCategory('state')">
+                        <span><i class="fas fa-landmark"></i> Tamil Nadu State Schemes</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="scheme-list" id="state-schemes">
+                        <!-- State schemes will be loaded here -->
                     </div>
                 </div>
             </div>
-            <div class="chat-input">
-                <input type="text" id="user-input" placeholder="Type your message here..." autocomplete="off">
-                <button id="send-btn"><i class="fas fa-paper-plane"></i></button>
+        </div>
+        
+        <!-- Right Panel - Chat Interface -->
+        <div class="right-panel">
+            <div class="panel-header">
+                <i class="fas fa-robot"></i> Scheme Eligibility Assistant
+            </div>
+            
+            <div class="chat-container">
+                <div class="eligibility-section">
+                    <h3 class="eligibility-title"><i class="fas fa-clipboard-check"></i> Check Your Eligibility</h3>
+                    <form id="eligibility-form" class="eligibility-form">
+                        <div class="form-group">
+                            <label for="age">Your Age:</label>
+                            <input type="number" id="age" name="age" min="10" max="120" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="income">Annual Family Income (₹):</label>
+                            <input type="number" id="income" name="income" min="0" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="occupation">Occupation:</label>
+                            <select id="occupation" name="occupation" required>
+                                <option value="">Select Occupation</option>
+                                <option value="farmer">Farmer</option>
+                                <option value="student">Student</option>
+                                <option value="business">Business/Self-employed</option>
+                                <option value="employee">Salaried Employee</option>
+                                <option value="healthcare">Healthcare Worker</option>
+                                <option value="weaver">Weaver</option>
+                                <option value="fisherman">Fisherman</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="state">State:</label>
+                            <select id="state" name="state" required>
+                                <option value="">Select State</option>
+                                <option value="Tamil Nadu">Tamil Nadu</option>
+                                <option value="Andhra Pradesh">Andhra Pradesh</option>
+                                <option value="Karnataka">Karnataka</option>
+                                <option value="Kerala">Kerala</option>
+                                <option value="other">Other State</option>
+                            </select>
+                        </div>
+                        
+                        <button type="submit" class="submit-button">
+                            <i class="fas fa-search"></i> Check Eligibility
+                        </button>
+                    </form>
+                </div>
+                
+                <div id="eligible-schemes-container" class="eligible-schemes">
+                    <!-- Eligible schemes will be displayed here -->
+                </div>
+                
+                <div class="chat-header">
+                    <h3><i class="fas fa-comments"></i> Need Help? Chat with Assistant</h3>
+                </div>
+                
+                <div class="chat-messages" id="chat-messages">
+                    <!-- Chat messages will appear here -->
+                </div>
+                
+                <div class="chat-input-container">
+                    <input type="text" class="chat-input" id="user-input" placeholder="Type your message here...">
+                    <button class="send-button" id="send-button">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
             </div>
         </div>
     </div>
 
     <script>
+        // Global variables
+        let sessionId = localStorage.getItem('sessionId') || generateSessionId();
+        localStorage.setItem('sessionId', sessionId);
+        
+        // Initialize the page
         document.addEventListener('DOMContentLoaded', function() {
-            // DOM Elements
-            const chatMessages = document.getElementById('chat-messages');
-            const userInput = document.getElementById('user-input');
-            const sendBtn = document.getElementById('send-btn');
-            const schemesContainer = document.getElementById('schemes-container');
-            const filterButtons = document.querySelectorAll('.filter-btn');
+            // Load all schemes
+            fetchSchemes();
             
-            let sessionId = localStorage.getItem('sessionId') || generateSessionId();
-            localStorage.setItem('sessionId', sessionId);
-
-            // Generate a unique session ID
-            function generateSessionId() {
-                return 'session-' + Math.random().toString(36).substr(2, 9);
+            // Set up chat interface
+            setupChat();
+            
+            // Set up eligibility form
+            setupEligibilityForm();
+            
+            // Send welcome message
+            setTimeout(() => {
+                addBotMessage("🌟 Welcome to Government Scheme Assistant! 🌟\n\nI can help you discover benefits you may qualify for. How can I assist you today?");
+                addQuickReplies([
+                    {title: "🔍 Browse Schemes", payload: "browse"},
+                    {title: "✅ Check Eligibility", payload: "eligibility"},
+                    {title: "ℹ️ Get Help", payload: "help"}
+                ]);
+            }, 500);
+        });
+        
+        // Generate a unique session ID
+        function generateSessionId() {
+            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+                return v.toString(16);
+            });
+        }
+        
+        // Toggle scheme category visibility
+        function toggleCategory(category) {
+            const element = document.getElementById(`${category}-schemes`);
+            const icon = element.parentElement.querySelector('.fa-chevron-down');
+            
+            element.classList.toggle('active');
+            icon.classList.toggle('fa-chevron-up');
+        }
+        
+        // Fetch all schemes from backend
+        function fetchSchemes() {
+            fetch('/api/schemes?type=central')
+                .then(response => response.json())
+                .then(data => {
+                    displaySchemes('central-schemes', data.schemes);
+                });
+            
+            fetch('/api/schemes?type=tn')
+                .then(response => response.json())
+                .then(data => {
+                    displaySchemes('state-schemes', data.schemes);
+                });
+        }
+        
+        // Display schemes in the left panel
+        function displaySchemes(containerId, schemes) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = '';
+            
+            schemes.forEach(scheme => {
+                const schemeElement = document.createElement('div');
+                schemeElement.className = 'scheme-item';
+                schemeElement.innerHTML = `
+                    <div class="scheme-name">${scheme.name}</div>
+                    <div class="scheme-benefits">${scheme.benefits}</div>
+                `;
+                schemeElement.addEventListener('click', () => {
+                    showSchemeDetails(scheme);
+                });
+                container.appendChild(schemeElement);
+            });
+            
+            // Show the first category by default
+            if (containerId === 'central-schemes') {
+                container.classList.add('active');
             }
-
-            // Fetch schemes from backend
-            async function fetchSchemes(filter = 'all') {
-                try {
-                    schemesContainer.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
-                    
-                    const response = await fetch(`/api/schemes?type=${filter}`);
-                    if (!response.ok) throw new Error('Failed to fetch schemes');
-                    
-                    const data = await response.json();
-                    renderSchemes(data.schemes);
-                } catch (error) {
-                    console.error('Error fetching schemes:', error);
-                    schemesContainer.innerHTML = `
-                        <div class="error-message" style="text-align: center; color: var(--gray);">
-                            <i class="fas fa-exclamation-triangle" style="font-size: 2rem; margin-bottom: 10px;"></i>
-                            <p>Failed to load schemes. Please try again later.</p>
-                        </div>
-                    `;
+        }
+        
+        // Show detailed scheme information
+        function showSchemeDetails(scheme) {
+            // Clear any existing eligible schemes
+            document.getElementById('eligible-schemes-container').innerHTML = '';
+            
+            const details = `
+                <div class="eligible-scheme fade-in">
+                    <div class="scheme-title">${scheme.name}</div>
+                    <div class="scheme-benefit"><strong>Category:</strong> ${scheme.category}</div>
+                    <div class="scheme-benefit"><strong>Benefits:</strong> ${scheme.benefits}</div>
+                    <div class="scheme-benefit"><strong>Eligibility:</strong> ${formatEligibility(scheme.eligibility)}</div>
+                    <div class="scheme-benefit"><strong>Deadline:</strong> ${scheme.deadline}</div>
+                    <div class="scheme-benefit"><strong>Steps to Apply:</strong> ${scheme.steps.replace(/\n/g, '<br>')}</div>
+                    <a href="${scheme.link}" target="_blank" class="scheme-link">
+                        <i class="fas fa-external-link-alt"></i> Apply Online
+                    </a>
+                </div>
+            `;
+            
+            document.getElementById('eligible-schemes-container').innerHTML = details;
+            
+            // Scroll to the details
+            document.getElementById('eligible-schemes-container').scrollIntoView({
+                behavior: 'smooth'
+            });
+        }
+        
+        // Format eligibility criteria for display
+        function formatEligibility(eligibility) {
+            let criteria = [];
+            
+            if (eligibility.min_age) {
+                criteria.push(`Minimum age: ${eligibility.min_age}`);
+            }
+            if (eligibility.income_max) {
+                criteria.push(`Maximum income: ₹${eligibility.income_max.toLocaleString()}`);
+            }
+            if (eligibility.occupation) {
+                if (Array.isArray(eligibility.occupation)) {
+                    criteria.push(`Occupation: ${eligibility.occupation.join(', ')}`);
+                } else {
+                    criteria.push(`Occupation: ${eligibility.occupation}`);
                 }
             }
-
-            // Render schemes in the UI
-            function renderSchemes(schemes) {
-                schemesContainer.innerHTML = '';
-                
-                if (schemes.length === 0) {
-                    schemesContainer.innerHTML = `
-                        <div style="text-align: center; color: var(--gray);">
-                            <i class="fas fa-inbox" style="font-size: 2rem; margin-bottom: 10px;"></i>
-                            <p>No schemes found for this filter</p>
-                        </div>
-                    `;
-                    return;
+            if (eligibility.state) {
+                criteria.push(`State: ${eligibility.state}`);
+            }
+            
+            return criteria.join(', ') || 'No specific eligibility criteria';
+        }
+        
+        // Set up the chat interface
+        function setupChat() {
+            const userInput = document.getElementById('user-input');
+            const sendButton = document.getElementById('send-button');
+            
+            // Send message when button is clicked
+            sendButton.addEventListener('click', sendMessage);
+            
+            // Send message when Enter key is pressed
+            userInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    sendMessage();
                 }
+            });
+        }
+        
+        // Send a message to the chatbot
+        function sendMessage() {
+            const userInput = document.getElementById('user-input');
+            const message = userInput.value.trim();
+            
+            if (message) {
+                addUserMessage(message);
+                userInput.value = '';
                 
-                schemes.forEach(scheme => {
-                    const card = createSchemeCard(scheme);
-                    schemesContainer.appendChild(card);
+                // Send to backend
+                fetch('/api/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        message: message,
+                        sender: sessionId
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    addBotMessage(data.text);
+                    
+                    if (data.quick_replies && data.quick_replies.length > 0) {
+                        addQuickReplies(data.quick_replies);
+                    }
+                    
+                    if (data.buttons && data.buttons.length > 0) {
+                        addButtons(data.buttons);
+                    }
+                })
+                .catch(error => {
+                    addBotMessage("Sorry, I'm having trouble connecting. Please try again later.");
+                    console.error('Error:', error);
                 });
             }
-
-            // Create a scheme card element
-            function createSchemeCard(scheme) {
-                const card = document.createElement('div');
-                card.className = 'scheme-card';
-                
-                // Format eligibility criteria
-                const eligibilityList = [];
-                if (scheme.eligibility.min_age) {
-                    eligibilityList.push(`Minimum age: ${scheme.eligibility.min_age}`);
-                }
-                if (scheme.eligibility.income_max) {
-                    eligibilityList.push(`Maximum income: ₹${scheme.eligibility.income_max?.toLocaleString('en-IN') || 'N/A'}`);
-                }
-                if (scheme.eligibility.occupation) {
-                    const occupations = Array.isArray(scheme.eligibility.occupation) ? 
-                                       scheme.eligibility.occupation.join(', ') : 
-                                       scheme.eligibility.occupation;
-                    eligibilityList.push(`Occupation: ${occupations}`);
-                }
-                if (scheme.eligibility.state) {
-                    eligibilityList.push(`State: ${scheme.eligibility.state}`);
-                }
-                
-                // Format steps
-                const stepsList = scheme.steps.split('\n').filter(step => step.trim() !== '');
-                
-                card.innerHTML = `
-                    <div class="scheme-header">
-                        <h3 class="scheme-title">${scheme.name}</h3>
-                        <span class="scheme-category">${scheme.category}</span>
-                    </div>
-                    <div class="scheme-benefits">
-                        <strong>Benefits:</strong> ${scheme.benefits}
-                    </div>
-                    <div class="eligibility-section">
-                        <h4 class="eligibility-title">Eligibility Criteria</h4>
-                        <ul class="eligibility-list">
-                            ${eligibilityList.length > 0 ? 
-                                eligibilityList.map(item => `
-                                    <li class="eligibility-item">
-                                        <i class="fas fa-check-circle"></i>
-                                        <span>${item}</span>
-                                    </li>
-                                `).join('') : 
-                                '<li class="eligibility-item"><i class="fas fa-check-circle"></i> No specific eligibility criteria</li>'
-                            }
-                        </ul>
-                    </div>
-                    <div class="scheme-footer">
-                        <a href="${scheme.link}" target="_blank" class="apply-btn">
-                            <i class="fas fa-external-link-alt"></i>
-                            Apply Now
-                        </a>
-                        <span class="scheme-deadline">Deadline: ${scheme.deadline}</span>
-                    </div>
-                `;
-                
-                return card;
-            }
-
-            // Send message to backend
-            async function sendChatMessage(message, payload = null) {
-                try {
-                    const response = await fetch('/api/chat', {
+        }
+        
+        // Add a user message to the chat
+        function addUserMessage(text) {
+            const chatMessages = document.getElementById('chat-messages');
+            const messageElement = document.createElement('div');
+            messageElement.className = 'message user-message fade-in';
+            messageElement.textContent = text;
+            chatMessages.appendChild(messageElement);
+            
+            // Clear any quick replies
+            const quickReplies = document.querySelectorAll('.quick-replies');
+            quickReplies.forEach(reply => reply.remove());
+            
+            // Scroll to bottom
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+        
+        // Add a bot message to the chat
+        function addBotMessage(text) {
+            const chatMessages = document.getElementById('chat-messages');
+            const messageElement = document.createElement('div');
+            messageElement.className = 'message bot-message fade-in';
+            
+            // Replace *text* with bold and \n with line breaks
+            let formattedText = text.replace(/\*(.*?)\*/g, '<strong>$1</strong>');
+            formattedText = formattedText.replace(/\n/g, '<br>');
+            
+            messageElement.innerHTML = formattedText;
+            chatMessages.appendChild(messageElement);
+            
+            // Scroll to bottom
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+        
+        // Add quick reply buttons
+        function addQuickReplies(replies) {
+            const chatMessages = document.getElementById('chat-messages');
+            const repliesContainer = document.createElement('div');
+            repliesContainer.className = 'quick-replies';
+            
+            replies.forEach(reply => {
+                const button = document.createElement('div');
+                button.className = 'quick-reply';
+                button.textContent = reply.title;
+                button.addEventListener('click', () => {
+                    addUserMessage(reply.title);
+                    
+                    // Send the payload to the backend
+                    fetch('/api/chat', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
                         },
                         body: JSON.stringify({
-                            message: message,
-                            sender: sessionId,
-                            payload: payload || message
+                            message: reply.payload,
+                            sender: sessionId
                         })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        addBotMessage(data.text);
+                        
+                        if (data.quick_replies && data.quick_replies.length > 0) {
+                            addQuickReplies(data.quick_replies);
+                        }
+                        
+                        if (data.buttons && data.buttons.length > 0) {
+                            addButtons(data.buttons);
+                        }
                     });
-                    
-                    if (!response.ok) throw new Error('Failed to send message');
-                    
-                    const data = await response.json();
-                    return data;
-                } catch (error) {
-                    console.error('Error sending message:', error);
-                    return null;
-                }
-            }
-
-            // Add user message to chat
-            function addUserMessage(message) {
-                const messageDiv = document.createElement('div');
-                messageDiv.className = 'message user-message';
-                messageDiv.innerHTML = `<p>${message}</p>`;
-                chatMessages.appendChild(messageDiv);
-                userInput.value = '';
-                scrollToBottom();
-            }
-
-            // Add bot message to chat
-            function addBotMessage(text, quickReplies = null, buttons = null) {
-                const messageDiv = document.createElement('div');
-                messageDiv.className = 'message bot-message';
+                });
                 
-                // Format message with line breaks and markdown-like syntax
-                let formattedText = text.replace(/\n/g, '<br>');
-                formattedText = formattedText.replace(/\*(.*?)\*/g, '<strong>$1</strong>');
-                formattedText = formattedText.replace(/_(.*?)_/g, '<em>$1</em>');
+                repliesContainer.appendChild(button);
+            });
+            
+            chatMessages.appendChild(repliesContainer);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+        
+        // Add buttons (for links)
+        function addButtons(buttons) {
+            const chatMessages = document.getElementById('chat-messages');
+            const buttonsContainer = document.createElement('div');
+            buttonsContainer.className = 'quick-replies';
+            
+            buttons.forEach(button => {
+                const link = document.createElement('a');
+                link.className = 'quick-reply';
+                link.textContent = button.title;
+                link.href = button.url;
+                link.target = '_blank';
                 
-                messageDiv.innerHTML = `<p>${formattedText}</p>`;
+                buttonsContainer.appendChild(link);
+            });
+            
+            chatMessages.appendChild(buttonsContainer);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+        
+        // Set up the eligibility form
+        function setupEligibilityForm() {
+            const form = document.getElementById('eligibility-form');
+            
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
                 
-                if (quickReplies && quickReplies.length > 0) {
-                    const quickRepliesDiv = document.createElement('div');
-                    quickRepliesDiv.className = 'quick-replies';
-                    
-                    quickReplies.forEach(reply => {
-                        const button = document.createElement('button');
-                        button.className = 'quick-reply';
-                        button.textContent = reply.title;
-                        button.dataset.payload = reply.payload || reply.title;
-                        quickRepliesDiv.appendChild(button);
-                    });
-                    
-                    messageDiv.appendChild(quickRepliesDiv);
-                }
+                const age = document.getElementById('age').value;
+                const income = document.getElementById('income').value;
+                const occupation = document.getElementById('occupation').value;
+                const state = document.getElementById('state').value;
                 
-                if (buttons && buttons.length > 0) {
-                    const buttonsDiv = document.createElement('div');
-                    buttonsDiv.className = 'quick-replies';
-                    buttonsDiv.style.flexDirection = 'column';
-                    buttonsDiv.style.alignItems = 'flex-start';
-                    buttonsDiv.style.gap = '5px';
-                    
-                    buttons.forEach(btn => {
-                        const link = document.createElement('a');
-                        link.href = btn.url;
-                        link.target = '_blank';
-                        link.className = 'apply-btn';
-                        link.style.display = 'inline-flex';
-                        link.style.marginTop = '5px';
-                        link.innerHTML = `<i class="fas fa-external-link-alt"></i> ${btn.title}`;
-                        buttonsDiv.appendChild(link);
-                    });
-                    
-                    messageDiv.appendChild(buttonsDiv);
+                // Validate inputs
+                if (!age || !income || !occupation || !state) {
+                    alert('Please fill in all fields');
+                    return;
                 }
                 
-                chatMessages.appendChild(messageDiv);
-                scrollToBottom();
-            }
-
-            // Scroll chat to bottom
-            function scrollToBottom() {
-                chatMessages.scrollTop = chatMessages.scrollHeight;
-            }
-
-            // Event listeners
-            filterButtons.forEach(button => {
-                button.addEventListener('click', function() {
-                    filterButtons.forEach(btn => btn.classList.remove('active'));
-                    this.classList.add('active');
-                    const filter = this.dataset.filter;
-                    fetchSchemes(filter);
+                // Send to backend
+                fetch('/api/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        message: "eligibility_check",
+                        sender: sessionId,
+                        payload: JSON.stringify({
+                            age: parseInt(age),
+                            income: parseInt(income),
+                            occupation: occupation,
+                            state: state
+                        })
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    // Display eligible schemes
+                    displayEligibleSchemes(data.text);
+                    
+                    // Add any quick replies
+                    if (data.quick_replies && data.quick_replies.length > 0) {
+                        addQuickReplies(data.quick_replies);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    addBotMessage("Sorry, I couldn't check your eligibility. Please try again.");
                 });
             });
-
-            sendBtn.addEventListener('click', async function() {
-                const message = userInput.value.trim();
-                if (message === '') return;
-                
-                addUserMessage(message);
-                const response = await sendChatMessage(message);
-                
-                if (response) {
-                    addBotMessage(response.text, response.quick_replies, response.buttons);
-                } else {
-                    addBotMessage("Sorry, I'm having trouble connecting to the server. Please try again later.");
-                }
-            });
-
-            userInput.addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    sendBtn.click();
-                }
-            });
-
-            // Quick reply buttons
-            chatMessages.addEventListener('click', async function(e) {
-                if (e.target.classList.contains('quick-reply')) {
-                    const payload = e.target.dataset.payload;
-                    const text = e.target.textContent;
-                    
-                    addUserMessage(text);
-                    const response = await sendChatMessage(text, payload);
-                    
-                    if (response) {
-                        addBotMessage(response.text, response.quick_replies, response.buttons);
-                    } else {
-                        addBotMessage("Sorry, I'm having trouble connecting to the server. Please try again later.");
-                    }
-                }
-            });
-
-            // Initial load
-            fetchSchemes('all');
-        });
+        }
+        
+        // Display eligible schemes in the right panel
+        function displayEligibleSchemes(text) {
+            // First add the bot message to the chat
+            addBotMessage(text);
+            
+            // The backend should ideally return the actual eligible schemes in the response
+            // For now, we'll parse the text to extract scheme names (this is a simplified approach)
+            
+            // This is a placeholder - in a real implementation, the backend should return
+            // the eligible schemes as structured data
+            const eligibleContainer = document.getElementById('eligible-schemes-container');
+            eligibleContainer.innerHTML = `
+                <div class="eligible-scheme fade-in">
+                    <p>${text.replace(/\n/g, '<br>')}</p>
+                    <p>Check the list above for details about each scheme.</p>
+                </div>
+            `;
+            
+            // Scroll to the eligible schemes
+            eligibleContainer.scrollIntoView({ behavior: 'smooth' });
+        }
     </script>
 </body>
 </html>
