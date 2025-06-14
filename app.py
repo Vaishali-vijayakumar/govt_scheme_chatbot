@@ -7,7 +7,6 @@ from datetime import datetime, timedelta
 import uuid
 import os
 from dotenv import load_dotenv
-import openai
 import redis
 import bleach
 import json
@@ -32,11 +31,6 @@ limiter = Limiter(
     default_limits=["200 per day", "50 per hour"],
     storage_uri=os.getenv('REDIS_URL', 'memory://')
 )
-
-# Initialize services
-openai.api_key = os.getenv('OPENAI_API_KEY')
-if not openai.api_key:
-    raise ValueError("OPENAI_API_KEY environment variable not set")
 
 # Configure logging
 logging.basicConfig(
@@ -77,7 +71,6 @@ class ConversationSteps:
     ELIGIBILITY_LOCATION = "5"
     SCHEME_RESULTS = "6"
 
-# Enhanced scheme database with 30 schemes (15 Central + 15 Tamil Nadu)
 SCHEME_DATABASE = {
     # Central Government Schemes (15)
     "PM-KISAN": {
@@ -323,7 +316,6 @@ SCHEME_DATABASE = {
         "link": "https://www.tn.gov.in"
     }
 }
-
 # Type aliases
 SessionData = Dict[str, Any]
 ContextData = Dict[str, Any]
@@ -365,23 +357,6 @@ def validate_age(age_str: str) -> bool:
         return 10 <= age <= 120
     except ValueError:
         return False
-
-def get_ai_response(prompt: str) -> Optional[str]:
-    """Get contextual response from OpenAI with error handling"""
-    try:
-        response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
-            messages=[
-                {"role": "system", "content": "You're a helpful government scheme assistant."},
-                {"role": "user", "content": prompt}
-            ],
-            temperature=0.7,
-            timeout=10
-        )
-        return response.choices[0].message['content']
-    except Exception as e:
-        logger.error(f"AI Error: {str(e)}")
-        return None
 
 def get_filtered_schemes(scheme_type: str) -> List[str]:
     """Filter schemes by type (central, tn, or all)"""
@@ -447,6 +422,20 @@ def is_eligible(context: ContextData, eligibility: Dict[str, Any]) -> bool:
     except Exception as e:
         logger.error(f"Eligibility check error: {str(e)}")
         return False
+
+def get_predefined_response(message: str) -> Optional[str]:
+    """Get predefined responses for common queries"""
+    responses = {
+        "help": "I can help you discover government schemes you may qualify for. You can:\n\n"
+                "1. Browse schemes by category\n"
+                "2. Check your eligibility for schemes\n"
+                "3. Get details about specific schemes",
+        "hi": "Hello! How can I help you today?",
+        "hello": "Hello! How can I help you today?",
+        "thanks": "You're welcome! Let me know if you need any more assistance.",
+        "thank you": "You're welcome! Let me know if you need any more assistance."
+    }
+    return responses.get(message.lower())
 
 @app.route('/health')
 def health_check():
@@ -544,7 +533,7 @@ def handle_conversation_step(step: str, incoming_msg: str, context: ContextData)
 
 def welcome_step() -> Dict[str, Any]:
     return {
-        "text": "🌟 *Welcome to Government Scheme AI Assistant!* 🌟\n\nI can help you discover benefits you may qualify for. Choose an option:",
+        "text": "🌟 *Welcome to Government Scheme Assistant!* 🌟\n\nI can help you discover benefits you may qualify for. Choose an option:",
         "quick_replies": [
             {"title": "🔍 Browse Schemes", "payload": "browse"},
             {"title": "✅ Check Eligibility", "payload": "eligibility"},
@@ -554,6 +543,17 @@ def welcome_step() -> Dict[str, Any]:
     }
 
 def main_menu_step(incoming_msg: str) -> Dict[str, Any]:
+    predefined_response = get_predefined_response(incoming_msg)
+    if predefined_response:
+        return {
+            "text": predefined_response,
+            "quick_replies": [
+                {"title": "🔍 Browse Schemes", "payload": "browse"},
+                {"title": "✅ Check Eligibility", "payload": "eligibility"},
+                {"title": "🏠 Main Menu", "payload": "menu"}
+            ]
+        }
+    
     if incoming_msg.lower() in ["central", "tn", "all"]:
         return handle_scheme_browsing(incoming_msg.lower())
     elif incoming_msg.lower() == "eligibility":
@@ -615,12 +615,10 @@ def start_eligibility_check() -> Dict[str, Any]:
     }
 
 def eligibility_age_step(incoming_msg: str, context: ContextData) -> Dict[str, Any]:
-    """Handle age input for eligibility check"""
     try:
         if incoming_msg.isdigit():
             age = int(incoming_msg)
         else:
-            # Extract numbers from string if present
             age_str = ''.join(filter(str.isdigit, incoming_msg))
             age = int(age_str) if age_str else 0
             
@@ -653,12 +651,10 @@ def eligibility_age_step(incoming_msg: str, context: ContextData) -> Dict[str, A
         return error_step()
 
 def eligibility_income_step(incoming_msg: str, context: ContextData) -> Dict[str, Any]:
-    """Handle income input for eligibility check"""
     try:
         if incoming_msg.isdigit():
             income = int(incoming_msg)
         else:
-            # Extract numbers from string if present
             income_str = ''.join(filter(str.isdigit, incoming_msg))
             income = int(income_str) if income_str else 0
             
@@ -692,7 +688,6 @@ def eligibility_income_step(incoming_msg: str, context: ContextData) -> Dict[str
         return error_step()
 
 def eligibility_occupation_step(incoming_msg: str, context: ContextData) -> Dict[str, Any]:
-    """Handle occupation input for eligibility check"""
     try:
         occupation = incoming_msg.lower()
         context['occupation'] = occupation
@@ -715,7 +710,6 @@ def eligibility_occupation_step(incoming_msg: str, context: ContextData) -> Dict
         return error_step()
 
 def eligibility_location_step(incoming_msg: str, context: ContextData) -> Dict[str, Any]:
-    """Handle location input and show eligible schemes"""
     try:
         state = incoming_msg.lower()
         context['state'] = state
@@ -726,11 +720,10 @@ def eligibility_location_step(incoming_msg: str, context: ContextData) -> Dict[s
                 eligible_schemes.append((name, data))
         
         if eligible_schemes:
-            # Sort by category for better organization
             eligible_schemes.sort(key=lambda x: x[1]['category'])
             
             scheme_list = []
-            for name, data in eligible_schemes[:10]:  # Limit to top 10
+            for name, data in eligible_schemes[:10]:
                 scheme_list.append(
                     f"\n\n⭐ *{name}* ({data['category']})\n"
                     f"   - Benefits: {data['benefits']}\n"
@@ -738,7 +731,6 @@ def eligibility_location_step(incoming_msg: str, context: ContextData) -> Dict[s
                     f"   - Deadline: {data['deadline']}"
                 )
             
-            # Create buttons for top 3 schemes
             buttons = [{
                 "title": f"Apply for {name}",
                 "url": data['link'],
@@ -772,7 +764,6 @@ def eligibility_location_step(incoming_msg: str, context: ContextData) -> Dict[s
         return error_step()
 
 def handle_more_schemes(incoming_msg: str) -> Dict[str, Any]:
-    """Show additional schemes beyond the initial 5"""
     try:
         scheme_type = incoming_msg.replace("more_", "")
         schemes = get_filtered_schemes(scheme_type)
@@ -782,7 +773,7 @@ def handle_more_schemes(incoming_msg: str) -> Dict[str, Any]:
         
         scheme_list = "\n\n".join(
             f"🔹 *{name}*\n   - Benefits: {SCHEME_DATABASE[name]['benefits']}"
-            for name in schemes[5:10]  # Show next 5 schemes
+            for name in schemes[5:10]
         )
         
         return {
@@ -798,7 +789,6 @@ def handle_more_schemes(incoming_msg: str) -> Dict[str, Any]:
         return error_step()
 
 def handle_scheme_details(incoming_msg: str) -> Dict[str, Any]:
-    """Show detailed options for schemes"""
     try:
         scheme_type = incoming_msg.replace("details_", "")
         schemes = get_filtered_schemes(scheme_type)
@@ -813,7 +803,6 @@ def handle_scheme_details(incoming_msg: str) -> Dict[str, Any]:
         return error_step()
 
 def show_full_scheme_details(incoming_msg: str) -> Dict[str, Any]:
-    """Show complete details for a specific scheme"""
     try:
         scheme_name = incoming_msg.replace("full_", "")
         scheme = SCHEME_DATABASE.get(scheme_name)
@@ -852,31 +841,28 @@ def show_full_scheme_details(incoming_msg: str) -> Dict[str, Any]:
         return error_step()
 
 def handle_unknown_input(incoming_msg: str) -> Dict[str, Any]:
-    """Handle unrecognized input with AI fallback"""
-    ai_response = get_ai_response(incoming_msg)
+    predefined_response = get_predefined_response(incoming_msg)
+    if predefined_response:
+        return {
+            "text": predefined_response,
+            "quick_replies": [
+                {"title": "🔍 Browse Schemes", "payload": "browse"},
+                {"title": "✅ Check Eligibility", "payload": "eligibility"},
+                {"title": "🏠 Main Menu", "payload": "menu"}
+            ]
+        }
     
-    if ai_response:
-        return {
-            "text": ai_response,
-            "quick_replies": [
-                {"title": "🔍 Browse Schemes", "payload": "browse"},
-                {"title": "✅ Check Eligibility", "payload": "eligibility"},
-                {"title": "🏠 Main Menu", "payload": "menu"}
-            ]
-        }
-    else:
-        return {
-            "text": "🤖 I didn't understand that. Please choose an option:",
-            "quick_replies": [
-                {"title": "🔍 Browse Schemes", "payload": "browse"},
-                {"title": "✅ Check Eligibility", "payload": "eligibility"},
-                {"title": "🆘 Help", "payload": "help"},
-                {"title": "🏠 Main Menu", "payload": "menu"}
-            ]
-        }
+    return {
+        "text": "🤖 I didn't understand that. Please choose an option:",
+        "quick_replies": [
+            {"title": "🔍 Browse Schemes", "payload": "browse"},
+            {"title": "✅ Check Eligibility", "payload": "eligibility"},
+            {"title": "🆘 Help", "payload": "help"},
+            {"title": "🏠 Main Menu", "payload": "menu"}
+        ]
+    }
 
 def unknown_step() -> Dict[str, Any]:
-    """Handle unknown conversation steps"""
     return {
         "text": "🔄 It seems we need to start over. Please choose an option:",
         "quick_replies": [
@@ -888,7 +874,6 @@ def unknown_step() -> Dict[str, Any]:
     }
 
 def error_step() -> Dict[str, Any]:
-    """Handle unexpected errors in conversation flow"""
     return {
         "text": "⚠️ Something went wrong. Let's start over. Choose an option:",
         "quick_replies": [
@@ -917,4 +902,5 @@ def list_schemes():
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
-    app.run(host='0.0.0.0', port=port, debug=os.environ.get('DEBUG', 'False') == 'True')
+    debug_mode = os.environ.get('DEBUG', 'False').lower() == 'true'
+    app.run(host='0.0.0.0', port=port, debug=debug_mode)
