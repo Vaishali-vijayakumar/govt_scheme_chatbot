@@ -28,7 +28,171 @@ user_sessions = {}
 
 # Enhanced scheme database
 scheme_database = {
-    # Central Government Schemes
+    # Add these schemes to your existing scheme_database dictionary (after the current schemes)
+
+    # Additional Central Government Schemes
+    "PM Matsya Sampada Yojana": {
+        "category": "Fisheries",
+        "steps": "1. Register at fisheries department\n2. Submit project proposal\n3. Get approval for subsidy",
+        "eligibility": {"occupation": ["fisherman", "fish farmer"], "min_age": 18},
+        "benefits": "Up to 40% subsidy for aquaculture projects",
+        "deadline": "2024-12-31",
+        "link": "https://dof.gov.in/pmmsy"
+    },
+    "PM Formalization of Micro Food Enterprises (PM FME)": {
+        "category": "Food Processing",
+        "steps": "1. Register on FME portal\n2. Submit business details\n3. Get training and certification",
+        "eligibility": {"business_type": ["food processing"], "employees_max": 10},
+        "benefits": "Credit linked capital subsidy up to ₹10 lakh",
+        "deadline": "2024-03-31",
+        "link": "https://mofpi.nic.in/pmfme"
+    },
+    "PM Kisan Maan Dhan Yojana": {
+        "category": "Pension",
+        "steps": "1. Visit CSC center\n2. Submit Aadhaar and bank details\n3. Pay monthly contribution",
+        "eligibility": {"occupation": ["farmer"], "age_range": [18, 40]},
+        "benefits": "₹3,000/month pension after 60 years",
+        "deadline": "Ongoing",
+        "link": "https://pmkmy.gov.in"
+    },
+    "Sukanya Samriddhi Yojana": {
+        "category": "Savings",
+        "steps": "1. Open account at post office/bank\n2. Submit birth certificate\n3. Make regular deposits",
+        "eligibility": {"gender": "female", "max_age": 10, "account_opener": "parent/guardian"},
+        "benefits": "High interest rate (7.6%) with tax benefits",
+        "deadline": "Ongoing",
+        "link": "https://www.indiapost.gov.in"
+    },
+    "PM Swanidhi Yojana": {
+        "category": "Urban Development",
+        "steps": "1. Apply through municipal corporation\n2. Submit vendor certificate\n3. Get loan approval",
+        "eligibility": {"occupation": ["street vendor"], "urban": True},
+        "benefits": "₹10,000 working capital loan",
+        "deadline": "2024-12-31",
+        "link": "https://pmsvanidhi.mohua.gov.in"
+    },
+    "National Apprenticeship Promotion Scheme (NAPS)": {
+        "category": "Employment",
+        "steps": "1. Register on portal\n2. Find employer\n3. Complete apprenticeship",
+        "eligibility": {"min_age": 16, "qualification": ["8th pass", "10th pass", "diploma", "graduate"]},
+        "benefits": "Stipend + government contribution",
+        "deadline": "Ongoing",
+        "link": "https://www.apprenticeshipindia.gov.in"
+    },
+    "Pradhan Mantri Mudra Yojana": {
+        "category": "Loans",
+        "steps": "1. Approach participating bank/NBFC\n2. Submit business plan\n3. Get loan approval",
+        "eligibility": {"business_type": ["micro enterprise"], "loan_amount": ["up to 10L"]},
+        "benefits": "Collateral-free loans up to ₹10 lakh",
+        "deadline": "Ongoing",
+        "link": "https://www.mudra.org.in"
+    },
+    "Atal Pension Yojana": {
+        "category": "Pension",
+        "steps": "1. Open account at bank/post office\n2. Choose pension amount\n3. Make regular contributions",
+        "eligibility": {"age_range": [18, 40], "bank_account": True},
+        "benefits": "Guanteed pension ₹1,000-5,000/month after 60",
+        "deadline": "Ongoing",
+        "link": "https://www.jansuraksha.gov.in"
+    },
+    "PM Garib Kalyan Anna Yojana": {
+        "category": "Food Security",
+        "steps": "1. Possess ration card\n2. Visit fair price shop\n3. Collect free grains",
+        "eligibility": {"ration_card": True, "category": ["priority", "antyodaya"]},
+        "benefits": "5kg free grains per person/month",
+        "deadline": "2024-12-31",
+        "link": "https://dfpd.gov.in"
+    },
+    "Digital India Bhashini": {
+        "category": "Technology",
+        "steps": "1. Register on portal\n2. Complete training\n3. Contribute translations",
+        "eligibility": {"language_skills": True, "min_age": 18},
+        "benefits": "Earnings for language contributions",
+        "deadline": "Ongoing",
+        "link": "https://www.bhashini.gov.in"
+    },
+
+    # Additional Tamil Nadu Government Schemes
+    "Moovalur Ramamirtham Ammal Scheme": {
+        "category": "Education",
+        "steps": "1. Apply through school\n2. Submit income certificate\n3. Receive assistance",
+        "eligibility": {"state": "Tamil Nadu", "gender": "female", "education": ["12th pass"]},
+        "benefits": "₹1,000/month for higher education",
+        "deadline": "Ongoing",
+        "link": "https://www.tn.gov.in"
+    },
+    "Namma Veettu Thozhilalan Scheme": {
+        "category": "Employment",
+        "steps": "1. Register at employment office\n2. Submit unemployment proof\n3. Receive allowance",
+        "eligibility": {"state": "Tamil Nadu", "unemployed": True, "min_age": 21},
+        "benefits": "₹2,000/month unemployment allowance",
+        "deadline": "Ongoing",
+        "link": "https://www.tn.gov.in"
+    },
+    "Green Tamil Nadu Mission": {
+        "category": "Environment",
+        "steps": "1. Register as volunteer\n2. Participate in plantation drives\n3. Maintain plants",
+        "eligibility": {"state": "Tamil Nadu", "min_age": 18},
+        "benefits": "Incentives for successful plantations",
+        "deadline": "Ongoing",
+        "link": "https://www.forests.tn.gov.in"
+    },
+    "Thayumanavar Scheme": {
+        "category": "Healthcare",
+        "steps": "1. Register at primary health center\n2. Submit age proof\n3. Receive health card",
+        "eligibility": {"state": "Tamil Nadu", "min_age": 60},
+        "benefits": "Free healthcare for seniors",
+        "deadline": "Ongoing",
+        "link": "https://www.tnhealth.tn.gov.in"
+    },
+    "Dr. Muthulakshmi Reddy Maternity Benefit Scheme": {
+        "category": "Women Welfare",
+        "steps": "1. Register at health center during pregnancy\n2. Submit hospital records\n3. Receive amount",
+        "eligibility": {"state": "Tamil Nadu", "gender": "female", "pregnant": True},
+        "benefits": "₹18,000 maternity assistance",
+        "deadline": "Ongoing",
+        "link": "https://www.tn.gov.in"
+    },
+    "Farmers Accident Relief Scheme": {
+        "category": "Agriculture",
+        "steps": "1. Register at agriculture office\n2. Pay premium\n3. Claim in case of accident",
+        "eligibility": {"state": "Tamil Nadu", "occupation": ["farmer"], "min_age": 18},
+        "benefits": "₹5 lakh accident insurance",
+        "deadline": "Ongoing",
+        "link": "https://www.tnagrisnet.tn.gov.in"
+    },
+    "Free Bus Travel for Women": {
+        "category": "Transport",
+        "steps": "1. Apply for pink pass\n2. Submit ID proof\n3. Get travel pass",
+        "eligibility": {"state": "Tamil Nadu", "gender": "female"},
+        "benefits": "Free travel in government buses",
+        "deadline": "Ongoing",
+        "link": "https://www.tnstc.in"
+    },
+    "Amma Cement Scheme": {
+        "category": "Housing",
+        "steps": "1. Apply at ration shop\n2. Submit construction proof\n3. Purchase cement at subsidy",
+        "eligibility": {"state": "Tamil Nadu", "construction": True, "ration_card": True},
+        "benefits": "Cement at ₹300/bag (max 750 bags)",
+        "deadline": "Ongoing",
+        "link": "https://www.tn.gov.in"
+    },
+    "Amma Water Scheme": {
+        "category": "Water Supply",
+        "steps": "1. Apply at municipal office\n2. Submit residence proof\n3. Get water connection",
+        "eligibility": {"state": "Tamil Nadu", "urban_poor": True},
+        "benefits": "Free drinking water connection",
+        "deadline": "Ongoing",
+        "link": "https://www.twadboard.tn.gov.in"
+    },
+    "Tamil Nadu Solar Rooftop Scheme": {
+        "category": "Energy",
+        "steps": "1. Apply on TANGEDCO portal\n2. Get technical approval\n3. Install with subsidy",
+        "eligibility": {"state": "Tamil Nadu", "electricity_consumer": True},
+        "benefits": "20-40% subsidy on solar plants",
+        "deadline": "2024-03-31",
+        "link": "https://www.tangedco.gov.in"
+    },
     "PM-KISAN": {
         "category": "Agriculture",
         "steps": "1. Visit https://pmkisan.gov.in\n2. Click 'Farmers Corner' > 'New Farmer Registration'\n3. Submit Aadhaar, bank & land details",
