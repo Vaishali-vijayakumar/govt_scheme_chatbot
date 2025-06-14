@@ -36,6 +36,8 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Redis connection (fallback to in-memory if Redis not available)
+# Redis connection (fallback to in-memory if Redis not available)
+user_sessions = {}  # Add this fallback dictionary
 try:
     r = redis.Redis(
         host=os.getenv('REDIS_HOST', 'localhost'),
@@ -48,6 +50,7 @@ try:
 except redis.ConnectionError:
     logger.warning("Redis not available, using in-memory storage")
     r = None
+    user_sessions = {}  # This line should already exist from above
 
 # Enhanced scheme database (31 total schemes)
 scheme_database = {
