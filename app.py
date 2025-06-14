@@ -9,7 +9,7 @@ import os
 from dotenv import load_dotenv
 import openai
 import redis
-import bleach  # For output sanitization
+import bleach
 
 # Load environment variables
 load_dotenv()
@@ -35,9 +35,10 @@ openai.api_key = os.getenv('OPENAI_API_KEY')
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Redis connection (fallback to in-memory if Redis not available)
-# Redis connection (fallback to in-memory if Redis not available)
-user_sessions = {}  # Add this fallback dictionary
+# Session storage initialization
+user_sessions = {}  # In-memory fallback storage
+
+# Redis connection
 try:
     r = redis.Redis(
         host=os.getenv('REDIS_HOST', 'localhost'),
@@ -50,11 +51,9 @@ try:
 except redis.ConnectionError:
     logger.warning("Redis not available, using in-memory storage")
     r = None
-    user_sessions = {}  # This line should already exist from above
 
-# Enhanced scheme database (31 total schemes)
+# Enhanced scheme database (same as your original)
 scheme_database = {
-    # Central Government Schemes (16 schemes)
     "PM-KISAN": {
         "category": "Agriculture",
         "steps": "1. Visit https://pmkisan.gov.in\n2. Click 'Farmers Corner' > 'New Farmer Registration'\n3. Submit Aadhaar, bank & land details",
@@ -63,18 +62,7 @@ scheme_database = {
         "deadline": "Ongoing",
         "link": "https://pmkisan.gov.in"
     },
-    # ... [Include all 15 other central schemes from previous code]
-    
-    # Tamil Nadu State Schemes (15 schemes)
-    "Kalaignar Magalir Urimai Thogai": {
-        "category": "Social Welfare",
-        "steps": "1. Apply at ration shops/e-sevai centers\n2. Submit Aadhaar and family details",
-        "eligibility": {"state": "Tamil Nadu", "gender": "female", "family_head": True},
-        "benefits": "₹1,000/month for women family heads",
-        "deadline": "Ongoing",
-        "link": "https://kmut.tn.gov.in"
-    },
-    # ... [Include all 14 other TN schemes from previous code]
+    # ... [Include all other schemes exactly as in your original]
 }
 
 def get_session(session_id):
@@ -105,7 +93,7 @@ def validate_age(age_str):
         return False
 
 def get_ai_response(prompt):
-    """Get contextual response from OpenAI with error handling"""
+    """Get contextual response from OpenAI"""
     try:
         response = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
@@ -114,7 +102,7 @@ def get_ai_response(prompt):
                 {"role": "user", "content": prompt}
             ],
             temperature=0.7,
-            timeout=10  # Added timeout
+            timeout=10
         )
         return response.choices[0].message['content']
     except Exception as e:
@@ -179,7 +167,7 @@ def chatbot():
 
 def handle_conversation_step(step, incoming_msg, context):
     """Handle conversation logic for each step"""
-    if step == "0":  # Initial step
+    if step == "0":
         return {
             "text": "Welcome to the Government Scheme Assistant! Would you like to:",
             "quick_replies": [
@@ -189,7 +177,7 @@ def handle_conversation_step(step, incoming_msg, context):
             ]
         }
     
-    elif step == "1":  # Main menu
+    elif step == "1":
         if "eligibility" in incoming_msg.lower():
             return {
                 "text": "Let's check your eligibility. What is your age in years?",
@@ -220,11 +208,31 @@ def handle_conversation_step(step, incoming_msg, context):
                 ]
             }
     
-    # ... [Include all other step handlers from original code]
+    elif step == "2":
+        try:
+            age = int(''.join(filter(str.isdigit, incoming_msg)))
+            if not validate_age(str(age)):
+                return {"text": "Please enter a valid age between 10 and 120 years"}
+            
+            context['age'] = age
+            return {
+                "text": "What is your approximate annual family income in ₹?",
+                "quick_replies": [
+                    {"title": "Under 1L", "payload": "income_1L"},
+                    {"title": "1L-3L", "payload": "income_1_3L"},
+                    {"title": "3L-5L", "payload": "income_3_5L"},
+                    {"title": "5L-10L", "payload": "income_5_10L"},
+                    {"title": "10L+", "payload": "income_10L_plus"}
+                ],
+                "context_update": context,
+                "next_step": "3"
+            }
+        except:
+            return {"text": "Please enter a valid age number (e.g., 25)"}
     
-    # Add similar handlers for steps 2-6 with proper validation
+    # ... [Include steps 3-6 following the same pattern]
     
-    else:  # Unknown step
+    else:
         return {
             "text": "I didn't understand that. Type 'help' for options or 'start over' to begin again.",
             "quick_replies": [
@@ -235,7 +243,7 @@ def handle_conversation_step(step, incoming_msg, context):
 
 @app.route("/api/schemes", methods=['GET'])
 def list_schemes():
-    """API endpoint to list all schemes with filters"""
+    """API endpoint to list all schemes"""
     try:
         scheme_type = request.args.get('type', 'all')
         
@@ -249,7 +257,7 @@ def list_schemes():
             schemes = list(scheme_database.keys())
             
         return jsonify({
-            "schemes": schemes[:100],  # Limit to 100 results
+            "schemes": schemes[:100],
             "count": len(schemes),
             "timestamp": datetime.now().isoformat()
         })
