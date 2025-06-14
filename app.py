@@ -63,12 +63,13 @@ STEPS = {
     "SCHEME_RESULTS": "6"
 }
 
-# Enhanced scheme database
+# Enhanced scheme database with 20 schemes (10 Central + 10 Tamil Nadu)
 scheme_database = {
+    # Central Government Schemes (10)
     "PM-KISAN": {
         "category": "Agriculture",
         "steps": "1. Visit https://pmkisan.gov.in\n2. Click 'Farmers Corner' > 'New Farmer Registration'\n3. Submit Aadhaar, bank & land details",
-        "eligibility": {"min_age": 18, "occupation": ["farmer"], "income_max": None},
+        "eligibility": {"min_age": 18, "occupation": ["farmer"], "income_max": None, "state": None},
         "benefits": "₹6,000/year in 3 installments",
         "deadline": "Ongoing",
         "link": "https://pmkisan.gov.in"
@@ -76,10 +77,156 @@ scheme_database = {
     "PM-AWAS-YOJANA": {
         "category": "Housing",
         "steps": "1. Contact local municipal office\n2. Submit proof of residence and income\n3. Get approval and subsidy",
-        "eligibility": {"min_age": 21, "occupation": None, "income_max": 180000},
+        "eligibility": {"min_age": 21, "occupation": None, "income_max": 180000, "state": None},
         "benefits": "Housing subsidy up to ₹2.67 lakh",
         "deadline": "31-12-2024",
         "link": "https://pmaymis.gov.in"
+    },
+    "AYUSHMAN BHARAT": {
+        "category": "Healthcare",
+        "steps": "1. Check eligibility at https://pmjay.gov.in\n2. Visit empaneled hospital with Aadhaar\n3. Get free treatment up to ₹5 lakh",
+        "eligibility": {"min_age": None, "occupation": None, "income_max": None, "state": None},
+        "benefits": "Health insurance cover of ₹5 lakh/year",
+        "deadline": "Ongoing",
+        "link": "https://pmjay.gov.in"
+    },
+    "PRADHAN MANTRI UJJWALA YOJANA": {
+        "category": "Women Welfare",
+        "steps": "1. Submit application with Aadhaar and BPL card\n2. Get LPG connection with subsidy",
+        "eligibility": {"min_age": 18, "occupation": None, "income_max": None, "state": None},
+        "benefits": "Free LPG connection with ₹1600 subsidy",
+        "deadline": "Ongoing",
+        "link": "https://www.pmuy.gov.in"
+    },
+    "STAND UP INDIA": {
+        "category": "Entrepreneurship",
+        "steps": "1. Approach any Scheduled Commercial Bank\n2. Submit business plan and documents\n3. Get loan approval",
+        "eligibility": {"min_age": 18, "occupation": ["SC/ST", "women"], "income_max": None, "state": None},
+        "benefits": "Bank loan between ₹10 lakh to ₹1 crore",
+        "deadline": "Ongoing",
+        "link": "https://www.standupmitra.in"
+    },
+    "PRADHAN MANTRI MUDRA YOJANA": {
+        "category": "Small Business",
+        "steps": "1. Approach any bank/MFI\n2. Submit business details and KYC\n3. Get loan up to ₹10 lakh",
+        "eligibility": {"min_age": 18, "occupation": ["small business"], "income_max": None, "state": None},
+        "benefits": "Collateral-free loans up to ₹10 lakh",
+        "deadline": "Ongoing",
+        "link": "https://www.mudra.org.in"
+    },
+    "PRADHAN MANTRI JEEVAN JYOTI BIMA YOJANA": {
+        "category": "Insurance",
+        "steps": "1. Link bank account with Aadhaar\n2. Pay premium of ₹330/year\n3. Get life cover automatically",
+        "eligibility": {"min_age": 18, "occupation": None, "income_max": None, "state": None},
+        "benefits": "Life insurance cover of ₹2 lakh",
+        "deadline": "31-03-2024",
+        "link": "https://www.jansuraksha.gov.in"
+    },
+    "ATAL PENSION YOJANA": {
+        "category": "Pension",
+        "steps": "1. Open account with any bank\n2. Choose pension amount (₹1000-5000)\n3. Start monthly contributions",
+        "eligibility": {"min_age": 18, "occupation": None, "income_max": None, "state": None},
+        "benefits": "Guaranteed pension after 60 years",
+        "deadline": "Ongoing",
+        "link": "https://www.jansuraksha.gov.in"
+    },
+    "PRADHAN MANTRI SHRAM YOGI MAAN-DHAN": {
+        "category": "Pension",
+        "steps": "1. Visit CSC center with Aadhaar\n2. Pay monthly contribution (₹55-200)\n3. Get pension after 60 years",
+        "eligibility": {"min_age": 18, "occupation": ["unorganized worker"], "income_max": 15000, "state": None},
+        "benefits": "Monthly pension of ₹3000 after 60",
+        "deadline": "Ongoing",
+        "link": "https://maandhan.in"
+    },
+    "PRADHAN MANTRI KISAN MAAN-DHAN YOJANA": {
+        "category": "Pension",
+        "steps": "1. Visit CSC center with Aadhaar\n2. Pay monthly contribution (₹55-200)\n3. Get pension after 60 years",
+        "eligibility": {"min_age": 18, "occupation": ["farmer"], "income_max": None, "state": None},
+        "benefits": "Monthly pension of ₹3000 after 60",
+        "deadline": "Ongoing",
+        "link": "https://pmkmy.gov.in"
+    },
+    
+    # Tamil Nadu Government Schemes (10)
+    "TAMIL NADU FREE ELECTRICITY": {
+        "category": "Utilities",
+        "steps": "1. Apply at local electricity board office\n2. Submit ration card and Aadhaar\n3. Get approval for 100 units free",
+        "eligibility": {"min_age": None, "occupation": None, "income_max": 120000, "state": "Tamil Nadu"},
+        "benefits": "100 units free electricity bi-monthly",
+        "deadline": "Ongoing",
+        "link": "https://www.tnebnet.org"
+    },
+    "TAMIL NADU WOMEN'S SELF HELP GROUP": {
+        "category": "Women Empowerment",
+        "steps": "1. Form group of 10-20 women\n2. Register at local panchayat\n3. Avail loans up to ₹10 lakh",
+        "eligibility": {"min_age": 18, "occupation": ["women"], "income_max": None, "state": "Tamil Nadu"},
+        "benefits": "Interest-free loans up to ₹10 lakh",
+        "deadline": "Ongoing",
+        "link": "https://www.tn.gov.in"
+    },
+    "AMMA TWO WHEELER SCHEME": {
+        "category": "Transport",
+        "steps": "1. Apply online at tn.gov.in\n2. Submit income certificate\n3. Get 50% subsidy up to ₹25,000",
+        "eligibility": {"min_age": 18, "occupation": ["women"], "income_max": 250000, "state": "Tamil Nadu"},
+        "benefits": "50% subsidy on two-wheelers",
+        "deadline": "31-12-2024",
+        "link": "https://www.tn.gov.in"
+    },
+    "TAMIL NADU FARMER'S ACCIDENTAL INSURANCE": {
+        "category": "Agriculture",
+        "steps": "1. Register at local agriculture office\n2. Pay premium of ₹100/year\n3. Get ₹5 lakh accidental cover",
+        "eligibility": {"min_age": 18, "occupation": ["farmer"], "income_max": None, "state": "Tamil Nadu"},
+        "benefits": "Accidental insurance of ₹5 lakh",
+        "deadline": "Ongoing",
+        "link": "https://www.tn.gov.in"
+    },
+    "TAMIL NADU FREE LAPTOP SCHEME": {
+        "category": "Education",
+        "steps": "1. Apply through college\n2. Submit marksheets and income proof\n3. Receive laptop after verification",
+        "eligibility": {"min_age": 17, "occupation": ["student"], "income_max": 250000, "state": "Tamil Nadu"},
+        "benefits": "Free laptop for college students",
+        "deadline": "Ongoing",
+        "link": "https://www.tn.gov.in"
+    },
+    "TAMIL NADU BUS TRAVEL CONCESSION": {
+        "category": "Transport",
+        "steps": "1. Apply at local bus depot\n2. Submit age proof and ID\n3. Get 50% fare concession",
+        "eligibility": {"min_age": 60, "occupation": None, "income_max": None, "state": "Tamil Nadu"},
+        "benefits": "50% discount on bus fares",
+        "deadline": "Ongoing",
+        "link": "https://www.tnstc.in"
+    },
+    "TAMIL NADU MARRIAGE ASSISTANCE": {
+        "category": "Social Welfare",
+        "steps": "1. Apply at local taluk office\n2. Submit marriage certificate\n3. Receive ₹50,000 assistance",
+        "eligibility": {"min_age": 18, "occupation": None, "income_max": 72000, "state": "Tamil Nadu"},
+        "benefits": "₹50,000 marriage assistance",
+        "deadline": "Ongoing",
+        "link": "https://www.tn.gov.in"
+    },
+    "TAMIL NADU FISHERMEN SUBSIDY": {
+        "category": "Fisheries",
+        "steps": "1. Register at fisheries department\n2. Submit fishing license\n3. Get 50% subsidy on equipment",
+        "eligibility": {"min_age": 18, "occupation": ["fisherman"], "income_max": None, "state": "Tamil Nadu"},
+        "benefits": "50% subsidy on fishing equipment",
+        "deadline": "Ongoing",
+        "link": "https://www.tn.gov.in"
+    },
+    "TAMIL NADU HANDLOOM WEAVERS SUBSIDY": {
+        "category": "Handloom",
+        "steps": "1. Register at handloom department\n2. Submit weaver ID card\n3. Get ₹25,000 subsidy",
+        "eligibility": {"min_age": 18, "occupation": ["weaver"], "income_max": None, "state": "Tamil Nadu"},
+        "benefits": "₹25,000 subsidy for handloom weavers",
+        "deadline": "Ongoing",
+        "link": "https://www.tn.gov.in"
+    },
+    "TAMIL NADU STARTUP SCHEME": {
+        "category": "Entrepreneurship",
+        "steps": "1. Register startup at tnstartup.tn.gov.in\n2. Submit business plan\n3. Get up to ₹30 lakh funding",
+        "eligibility": {"min_age": 18, "occupation": ["entrepreneur"], "income_max": None, "state": "Tamil Nadu"},
+        "benefits": "Funding up to ₹30 lakh for startups",
+        "deadline": "31-12-2024",
+        "link": "https://tnstartup.tn.gov.in"
     }
 }
 
@@ -126,6 +273,33 @@ def get_ai_response(prompt):
     except Exception as e:
         logger.error(f"AI Error: {str(e)}")
         return None
+
+def get_filtered_schemes(scheme_type):
+    """Filter schemes by type (central, tn, or all)"""
+    if scheme_type == "central":
+        return [name for name, data in scheme_database.items() 
+                if not data['eligibility'].get('state')]
+    elif scheme_type == "tn":
+        return [name for name, data in scheme_database.items() 
+                if data['eligibility'].get('state') == "Tamil Nadu"]
+    else:
+        return list(scheme_database.keys())
+
+def format_eligibility(eligibility):
+    """Format eligibility criteria for display"""
+    criteria = []
+    if eligibility.get('min_age'):
+        criteria.append(f"Minimum age: {eligibility['min_age']}")
+    if eligibility.get('income_max'):
+        criteria.append(f"Maximum income: ₹{eligibility['income_max']:,}")
+    if eligibility.get('occupation'):
+        if isinstance(eligibility['occupation'], list):
+            criteria.append(f"Occupation: {', '.join(eligibility['occupation'])}")
+        else:
+            criteria.append(f"Occupation: {eligibility['occupation']}")
+    if eligibility.get('state'):
+        criteria.append(f"State: {eligibility['state']}")
+    return "\n".join(criteria) if criteria else "No specific eligibility criteria"
 
 @app.route('/health')
 def health_check():
@@ -196,17 +370,44 @@ def handle_conversation_step(step, incoming_msg, context):
     """Handle conversation logic for each step"""
     if step == STEPS["WELCOME"]:
         return {
-            "text": "Welcome to the Government Scheme Assistant! Would you like to:",
+            "text": "Welcome to the Government Scheme Assistant! Would you like to check:",
             "quick_replies": [
-                {"title": "Check Eligibility", "payload": "eligibility"},
-                {"title": "Browse Schemes", "payload": "browse"},
-                {"title": "Get Help", "payload": "help"}
+                {"title": "Central Schemes", "payload": "central"},
+                {"title": "TN State Schemes", "payload": "tn"},
+                {"title": "All Schemes", "payload": "all"},
+                {"title": "Check Eligibility", "payload": "eligibility"}
             ],
             "next_step": STEPS["MAIN_MENU"]
         }
     
     elif step == STEPS["MAIN_MENU"]:
-        if incoming_msg.lower() == "eligibility":
+        if incoming_msg.lower() in ["central", "tn", "all"]:
+            scheme_type = incoming_msg.lower()
+            schemes = get_filtered_schemes(scheme_type)
+            
+            if not schemes:
+                return {
+                    "text": f"No {scheme_type} schemes found. Would you like to try a different category?",
+                    "quick_replies": [
+                        {"title": "Central Schemes", "payload": "central"},
+                        {"title": "TN Schemes", "payload": "tn"},
+                        {"title": "All Schemes", "payload": "all"}
+                    ]
+                }
+            
+            scheme_list = "\n\n".join([f"• {name}: {scheme_database[name]['benefits']}" 
+                                      for name in schemes[:10]])
+            
+            return {
+                "text": f"Here are {scheme_type} government schemes:\n\n{scheme_list}",
+                "quick_replies": [
+                    {"title": "See More", "payload": f"more_{scheme_type}"},
+                    {"title": "Check Eligibility", "payload": "eligibility"},
+                    {"title": "Main Menu", "payload": "menu"}
+                ]
+            }
+            
+        elif incoming_msg.lower() == "eligibility":
             return {
                 "text": "Let's check your eligibility. What is your age in years? (You can type the number or select an option)",
                 "quick_replies": [
@@ -218,20 +419,67 @@ def handle_conversation_step(step, incoming_msg, context):
                 ],
                 "next_step": STEPS["ELIGIBILITY_AGE"]
             }
-        elif incoming_msg.lower() == "browse":
-            schemes = list(scheme_database.keys())[:5]
+            
+        elif incoming_msg.startswith("more_"):
+            scheme_type = incoming_msg.replace("more_", "")
+            schemes = get_filtered_schemes(scheme_type)
+            scheme_list = "\n\n".join([f"• {name}: {scheme_database[name]['benefits']}" 
+                                    for name in schemes[10:]])
+            
             return {
-                "text": "Here are some key government schemes:\n\n" +
-                        "\n".join([f"• {name}: {scheme_database[name]['benefits']}" for name in schemes]),
-                "quick_replies": [{"title": name, "payload": f"details_{name}"} for name in schemes] +
-                                [{"title": "See More", "payload": "more_schemes"}]
+                "text": f"More {scheme_type} government schemes:\n\n{scheme_list}",
+                "quick_replies": [
+                    {"title": "See Details", "payload": f"details_{scheme_type}"},
+                    {"title": "Main Menu", "payload": "menu"}
+                ]
             }
+            
+        elif incoming_msg.startswith("details_"):
+            scheme_type = incoming_msg.replace("details_", "")
+            schemes = get_filtered_schemes(scheme_type)
+            
+            return {
+                "text": f"Select a {scheme_type} scheme to view details:",
+                "quick_replies": [{"title": name, "payload": f"full_{name}"} for name in schemes[:5]] +
+                                [{"title": "More Schemes", "payload": f"details_more_{scheme_type}"}]
+            }
+            
+        elif incoming_msg.startswith("full_"):
+            scheme_name = incoming_msg.replace("full_", "")
+            scheme = scheme_database.get(scheme_name)
+            
+            if not scheme:
+                return {
+                    "text": "Scheme details not found. Please try another scheme.",
+                    "quick_replies": [
+                        {"title": "Central Schemes", "payload": "central"},
+                        {"title": "TN Schemes", "payload": "tn"}
+                    ]
+                }
+                
+            return {
+                "text": f"Scheme: {scheme_name}\n\n"
+                       f"Category: {scheme['category']}\n"
+                       f"Benefits: {scheme['benefits']}\n"
+                       f"Eligibility: {format_eligibility(scheme['eligibility'])}\n"
+                       f"Steps to Apply:\n{scheme['steps']}\n\n"
+                       f"Apply at: {scheme['link']}",
+                "quick_replies": [
+                    {"title": "Apply Now", "payload": f"apply_{scheme_name}"},
+                    {"title": "Other Schemes", "payload": "menu"}
+                ]
+            }
+            
+        elif incoming_msg == "menu":
+            return handle_conversation_step(STEPS["WELCOME"], "", context)
+            
         else:
             return {
-                "text": get_ai_response(incoming_msg) or "I can help with government schemes. Please ask about eligibility, benefits, or application process.",
+                "text": get_ai_response(incoming_msg) or "I can help with government schemes. Please select an option:",
                 "quick_replies": [
-                    {"title": "Check Eligibility", "payload": "eligibility"},
-                    {"title": "Browse Schemes", "payload": "browse"}
+                    {"title": "Central Schemes", "payload": "central"},
+                    {"title": "TN Schemes", "payload": "tn"},
+                    {"title": "Check Eligibility", "payload": "eligibility"}
                 ]
             }
     
@@ -369,13 +617,13 @@ def list_schemes():
         scheme_type = request.args.get('type', 'all')
         
         if scheme_type == 'central':
-            schemes = [name for name, data in scheme_database.items() 
+            schemes = [{"name": name, **data} for name, data in scheme_database.items() 
                       if not data['eligibility'].get('state')]
         elif scheme_type == 'tn':
-            schemes = [name for name, data in scheme_database.items() 
+            schemes = [{"name": name, **data} for name, data in scheme_database.items() 
                       if data['eligibility'].get('state') == "Tamil Nadu"]
         else:
-            schemes = list(scheme_database.keys())
+            schemes = [{"name": name, **data} for name, data in scheme_database.items()]
             
         return jsonify({
             "schemes": schemes[:100],
