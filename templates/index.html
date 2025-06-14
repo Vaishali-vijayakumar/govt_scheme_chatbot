@@ -5,20 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Government Scheme Assistant</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         :root {
-            --primary-color: #2563eb;
-            --secondary-color: #1e40af;
-            --accent-color: #3b82f6;
-            --light-color: #f8fafc;
-            --dark-color: #1e293b;
-            --success-color: #10b981;
-            --warning-color: #f59e0b;
-            --danger-color: #ef4444;
-            --border-radius: 12px;
-            --box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-            --transition: all 0.3s ease;
+            --primary: #2563eb;
+            --primary-dark: #1e40af;
+            --secondary: #10b981;
+            --light: #f8fafc;
+            --dark: #1e293b;
+            --gray: #64748b;
+            --light-gray: #e2e8f0;
+            --border-radius: 8px;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
         }
 
         * {
@@ -30,7 +28,7 @@
         body {
             font-family: 'Poppins', sans-serif;
             background-color: #f1f5f9;
-            color: var(--dark-color);
+            color: var(--dark);
             line-height: 1.6;
         }
 
@@ -42,11 +40,9 @@
 
         header {
             background-color: white;
-            box-shadow: var(--box-shadow);
+            box-shadow: var(--shadow);
             padding: 20px 0;
-            position: sticky;
-            top: 0;
-            z-index: 100;
+            margin-bottom: 30px;
         }
 
         .header-content {
@@ -68,175 +64,59 @@
         .logo h1 {
             font-size: 1.5rem;
             font-weight: 600;
-            color: var(--primary-color);
+            color: var(--primary);
         }
 
-        .main {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 20px;
-            margin-top: 20px;
-        }
-
-        @media (min-width: 768px) {
-            .main {
-                grid-template-columns: 300px 1fr;
-            }
-        }
-
-        .sidebar {
-            background-color: white;
-            border-radius: var(--border-radius);
-            box-shadow: var(--box-shadow);
-            padding: 20px;
-            height: fit-content;
-        }
-
-        .chat-container {
-            background-color: white;
-            border-radius: var(--border-radius);
-            box-shadow: var(--box-shadow);
-            padding: 20px;
+        .filter-buttons {
             display: flex;
-            flex-direction: column;
-            height: 80vh;
-        }
-
-        .chat-header {
-            display: flex;
-            align-items: center;
             gap: 10px;
-            margin-bottom: 20px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid #e2e8f0;
         }
 
-        .chat-header h2 {
-            font-size: 1.25rem;
-            font-weight: 600;
-        }
-
-        .chat-header .badge {
-            background-color: var(--primary-color);
-            color: white;
-            padding: 2px 8px;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: 500;
-        }
-
-        .chat-messages {
-            flex: 1;
-            overflow-y: auto;
-            padding: 10px;
-            margin-bottom: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-
-        .message {
-            max-width: 80%;
-            padding: 12px 16px;
-            border-radius: var(--border-radius);
-            line-height: 1.5;
-        }
-
-        .bot-message {
-            background-color: #f8fafc;
-            align-self: flex-start;
-            border-bottom-left-radius: 4px;
-        }
-
-        .user-message {
-            background-color: var(--primary-color);
-            color: white;
-            align-self: flex-end;
-            border-bottom-right-radius: 4px;
-        }
-
-        .quick-replies {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-top: 10px;
-        }
-
-        .quick-reply {
-            background-color: #e2e8f0;
+        .filter-btn {
+            background-color: var(--light-gray);
             border: none;
             border-radius: 20px;
             padding: 8px 16px;
             font-size: 0.875rem;
             cursor: pointer;
-            transition: var(--transition);
+            transition: all 0.3s ease;
         }
 
-        .quick-reply:hover {
-            background-color: #cbd5e1;
-        }
-
-        .chat-input {
-            display: flex;
-            gap: 10px;
-            padding-top: 10px;
-            border-top: 1px solid #e2e8f0;
-        }
-
-        .chat-input input {
-            flex: 1;
-            padding: 12px 16px;
-            border: 1px solid #e2e8f0;
-            border-radius: var(--border-radius);
-            font-size: 1rem;
-            outline: none;
-            transition: var(--transition);
-        }
-
-        .chat-input input:focus {
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
-        }
-
-        .chat-input button {
-            background-color: var(--primary-color);
+        .filter-btn.active {
+            background-color: var(--primary);
             color: white;
-            border: none;
-            border-radius: var(--border-radius);
-            padding: 0 20px;
-            cursor: pointer;
-            transition: var(--transition);
         }
 
-        .chat-input button:hover {
-            background-color: var(--secondary-color);
+        .schemes-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
         }
 
         .scheme-card {
             background-color: white;
             border-radius: var(--border-radius);
-            box-shadow: var(--box-shadow);
+            box-shadow: var(--shadow);
             padding: 20px;
-            margin-bottom: 20px;
-            transition: var(--transition);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
 
         .scheme-card:hover {
             transform: translateY(-5px);
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
         }
 
         .scheme-header {
             display: flex;
             justify-content: space-between;
-            align-items: center;
             margin-bottom: 15px;
         }
 
         .scheme-title {
             font-size: 1.25rem;
             font-weight: 600;
-            color: var(--primary-color);
+            color: var(--primary);
         }
 
         .scheme-category {
@@ -248,62 +128,27 @@
             font-weight: 500;
         }
 
-        .scheme-details {
-            margin-bottom: 15px;
-        }
-
         .scheme-detail {
             display: flex;
             gap: 10px;
-            margin-bottom: 8px;
+            margin-bottom: 10px;
         }
 
         .scheme-detail i {
-            color: var(--primary-color);
+            color: var(--primary);
             margin-top: 3px;
         }
 
-        .scheme-actions {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-top: 20px;
-        }
-
-        .apply-btn {
-            background-color: var(--success-color);
-            color: white;
-            border: none;
-            border-radius: var(--border-radius);
-            padding: 10px 20px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: var(--transition);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .apply-btn:hover {
-            background-color: #0d9488;
-        }
-
-        .scheme-deadline {
-            font-size: 0.875rem;
-            color: #64748b;
-        }
-
-        .eligibility-criteria {
+        .eligibility-section {
             background-color: #f8fafc;
             border-radius: var(--border-radius);
             padding: 15px;
             margin: 15px 0;
         }
 
-        .eligibility-title {
+        .section-title {
             font-weight: 600;
             margin-bottom: 10px;
-            color: var(--dark-color);
         }
 
         .eligibility-list {
@@ -318,142 +163,65 @@
         }
 
         .eligibility-item i {
-            color: var(--success-color);
+            color: var(--secondary);
             font-size: 0.75rem;
-        }
-
-        .steps-container {
-            margin-top: 15px;
-        }
-
-        .steps-title {
-            font-weight: 600;
-            margin-bottom: 10px;
         }
 
         .steps-list {
             padding-left: 20px;
+            margin-bottom: 15px;
         }
 
         .steps-list li {
             margin-bottom: 8px;
         }
 
-        .filter-options {
-            margin-bottom: 20px;
-        }
-
-        .filter-title {
-            font-weight: 600;
-            margin-bottom: 10px;
-        }
-
-        .filter-buttons {
+        .scheme-footer {
             display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-
-        .filter-btn {
-            background-color: #e2e8f0;
-            border: none;
-            border-radius: 20px;
-            padding: 8px 16px;
-            font-size: 0.875rem;
-            cursor: pointer;
-            transition: var(--transition);
-        }
-
-        .filter-btn.active {
-            background-color: var(--primary-color);
-            color: white;
-        }
-
-        .filter-btn:hover {
-            background-color: #cbd5e1;
-        }
-
-        .filter-btn.active:hover {
-            background-color: var(--secondary-color);
-        }
-
-        .no-schemes {
-            text-align: center;
-            padding: 40px 20px;
-            color: #64748b;
-        }
-
-        .no-schemes i {
-            font-size: 2rem;
-            margin-bottom: 10px;
-            color: #cbd5e1;
-        }
-
-        .loading {
-            display: flex;
-            justify-content: center;
+            justify-content: space-between;
             align-items: center;
-            height: 100px;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid var(--light-gray);
         }
 
-        .spinner {
-            width: 40px;
-            height: 40px;
-            border: 4px solid rgba(0, 0, 0, 0.1);
-            border-left-color: var(--primary-color);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
+        .apply-btn {
+            background-color: var(--secondary);
+            color: white;
+            border: none;
+            border-radius: var(--border-radius);
+            padding: 8px 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
         }
 
-        @keyframes spin {
-            to {
-                transform: rotate(360deg);
-            }
+        .apply-btn:hover {
+            background-color: #0d9488;
         }
 
-        .hidden {
-            display: none;
+        .deadline {
+            font-size: 0.875rem;
+            color: var(--gray);
         }
 
-        /* Markdown-like formatting for bot messages */
-        .bot-message strong {
-            font-weight: 600;
-        }
-
-        .bot-message em {
-            font-style: italic;
-        }
-
-        .bot-message ul, .bot-message ol {
-            margin-left: 20px;
-            margin-bottom: 10px;
-        }
-
-        .bot-message li {
-            margin-bottom: 5px;
-        }
-
-        /* Responsive adjustments */
         @media (max-width: 768px) {
             .header-content {
                 flex-direction: column;
-                gap: 10px;
+                gap: 15px;
             }
             
-            .main {
+            .filter-buttons {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            
+            .schemes-container {
                 grid-template-columns: 1fr;
-            }
-            
-            .scheme-header {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 10px;
-            }
-            
-            .scheme-actions {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 10px;
             }
         }
     </style>
@@ -465,7 +233,7 @@
                 <img src="https://cdn-icons-png.flaticon.com/512/2103/2103633.png" alt="Government Logo">
                 <h1>Scheme Assistant</h1>
             </div>
-            <div>
+            <div class="filter-buttons">
                 <button class="filter-btn active" data-filter="all">All Schemes</button>
                 <button class="filter-btn" data-filter="central">Central</button>
                 <button class="filter-btn" data-filter="tn">Tamil Nadu</button>
@@ -473,58 +241,18 @@
         </div>
     </header>
 
-    <div class="container main">
-        <div class="sidebar">
-            <div class="filter-options">
-                <h3 class="filter-title">Filter Schemes</h3>
-                <div class="filter-buttons">
-                    <button class="filter-btn active" data-filter="all">All</button>
-                    <button class="filter-btn" data-filter="central">Central</button>
-                    <button class="filter-btn" data-filter="tn">Tamil Nadu</button>
-                </div>
-            </div>
-            <div id="schemes-list">
-                <!-- Schemes will be loaded here -->
-                <div class="loading">
-                    <div class="spinner"></div>
-                </div>
-            </div>
-        </div>
-
-        <div class="chat-container">
-            <div class="chat-header">
-                <i class="fas fa-robot"></i>
-                <h2>Chat Assistant</h2>
-                <span class="badge">Online</span>
-            </div>
-            <div class="chat-messages" id="chat-messages">
-                <div class="message bot-message">
-                    <p>🌟 <strong>Welcome to Government Scheme AI Assistant!</strong> 🌟</p>
-                    <p>I can help you discover benefits you may qualify for. Choose an option:</p>
-                    <div class="quick-replies">
-                        <button class="quick-reply">🔍 Browse Schemes</button>
-                        <button class="quick-reply">✅ Check Eligibility</button>
-                        <button class="quick-reply">ℹ️ Get Help</button>
-                    </div>
-                </div>
-            </div>
-            <div class="chat-input">
-                <input type="text" id="user-input" placeholder="Type your message here..." autocomplete="off">
-                <button id="send-btn"><i class="fas fa-paper-plane"></i></button>
+    <div class="container">
+        <div id="schemes-container" class="schemes-container">
+            <!-- Schemes will be loaded here -->
+            <div class="loading" style="text-align: center; grid-column: 1 / -1;">
+                <div class="spinner" style="width: 40px; height: 40px; border: 4px solid rgba(0,0,0,0.1); border-left-color: var(--primary); border-radius: 50%; margin: 0 auto; animation: spin 1s linear infinite;"></div>
             </div>
         </div>
     </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // DOM Elements
-            const chatMessages = document.getElementById('chat-messages');
-            const userInput = document.getElementById('user-input');
-            const sendBtn = document.getElementById('send-btn');
-            const schemesList = document.getElementById('schemes-list');
-            const filterButtons = document.querySelectorAll('.filter-btn');
-            
-            // Sample schemes data (in a real app, this would come from your backend)
+            // Sample scheme data (in a real app, this would come from your backend API)
             const schemes = [
                 {
                     "name": "PM-KISAN",
@@ -553,54 +281,57 @@
                     "deadline": "31-12-2024",
                     "link": "https://www.tn.gov.in"
                 }
+                // Add more schemes as needed
             ];
 
-            // Initialize the app
-            function init() {
-                renderSchemes('all');
-                setupEventListeners();
-            }
+            const schemesContainer = document.getElementById('schemes-container');
+            const filterButtons = document.querySelectorAll('.filter-btn');
 
             // Render schemes based on filter
             function renderSchemes(filter) {
-                schemesList.innerHTML = '';
+                schemesContainer.innerHTML = '';
                 
                 // Show loading spinner
                 const loadingDiv = document.createElement('div');
                 loadingDiv.className = 'loading';
-                loadingDiv.innerHTML = '<div class="spinner"></div>';
-                schemesList.appendChild(loadingDiv);
+                loadingDiv.style.textAlign = 'center';
+                loadingDiv.style.gridColumn = '1 / -1';
+                loadingDiv.innerHTML = '<div class="spinner" style="width: 40px; height: 40px; border: 4px solid rgba(0,0,0,0.1); border-left-color: var(--primary); border-radius: 50%; margin: 0 auto; animation: spin 1s linear infinite;"></div>';
+                schemesContainer.appendChild(loadingDiv);
                 
-                // Simulate API call delay
+                // Simulate API delay
                 setTimeout(() => {
-                    schemesList.innerHTML = '';
+                    schemesContainer.innerHTML = '';
                     
                     const filteredSchemes = filter === 'all' ? schemes : 
-                                          filter === 'central' ? schemes.filter(s => !s.eligibility.state) :
+                                          filter === 'central' ? schemes.filter(s => !s.eligibility.state) : 
                                           schemes.filter(s => s.eligibility.state === "Tamil Nadu");
                     
                     if (filteredSchemes.length === 0) {
-                        const noSchemesDiv = document.createElement('div');
-                        noSchemesDiv.className = 'no-schemes';
-                        noSchemesDiv.innerHTML = `
-                            <i class="fas fa-inbox"></i>
-                            <p>No schemes found for this filter</p>
+                        const noResults = document.createElement('div');
+                        noResults.className = 'no-results';
+                        noResults.style.gridColumn = '1 / -1';
+                        noResults.style.textAlign = 'center';
+                        noResults.style.padding = '40px';
+                        noResults.innerHTML = `
+                            <i class="fas fa-inbox" style="font-size: 2rem; color: #cbd5e1; margin-bottom: 10px;"></i>
+                            <p style="color: var(--gray);">No schemes found for this filter</p>
                         `;
-                        schemesList.appendChild(noSchemesDiv);
+                        schemesContainer.appendChild(noResults);
                         return;
                     }
                     
                     filteredSchemes.forEach(scheme => {
                         const schemeCard = createSchemeCard(scheme);
-                        schemesList.appendChild(schemeCard);
+                        schemesContainer.appendChild(schemeCard);
                     });
                 }, 500);
             }
 
             // Create a scheme card element
             function createSchemeCard(scheme) {
-                const schemeCard = document.createElement('div');
-                schemeCard.className = 'scheme-card';
+                const card = document.createElement('div');
+                card.className = 'scheme-card';
                 
                 // Format eligibility criteria
                 const eligibilityList = [];
@@ -623,208 +354,68 @@
                 // Format steps
                 const stepsList = scheme.steps.split('\n').filter(step => step.trim() !== '');
                 
-                schemeCard.innerHTML = `
+                card.innerHTML = `
                     <div class="scheme-header">
                         <h3 class="scheme-title">${scheme.name}</h3>
                         <span class="scheme-category">${scheme.category}</span>
                     </div>
-                    <div class="scheme-details">
-                        <div class="scheme-detail">
-                            <i class="fas fa-gift"></i>
-                            <span><strong>Benefits:</strong> ${scheme.benefits}</span>
-                        </div>
-                        <div class="eligibility-criteria">
-                            <h4 class="eligibility-title">Eligibility Criteria</h4>
-                            <ul class="eligibility-list">
-                                ${eligibilityList.length > 0 ? 
-                                    eligibilityList.map(item => `
-                                        <li class="eligibility-item">
-                                            <i class="fas fa-check-circle"></i>
-                                            <span>${item}</span>
-                                        </li>
-                                    `).join('') : 
-                                    '<li class="eligibility-item"><i class="fas fa-check-circle"></i> No specific eligibility criteria</li>'
-                                }
-                            </ul>
-                        </div>
-                        <div class="steps-container">
-                            <h4 class="steps-title">Application Steps</h4>
-                            <ol class="steps-list">
-                                ${stepsList.map(step => `<li>${step}</li>`).join('')}
-                            </ol>
-                        </div>
+                    <div class="scheme-detail">
+                        <i class="fas fa-gift"></i>
+                        <span><strong>Benefits:</strong> ${scheme.benefits}</span>
                     </div>
-                    <div class="scheme-actions">
+                    <div class="eligibility-section">
+                        <h4 class="section-title">Eligibility Criteria</h4>
+                        <ul class="eligibility-list">
+                            ${eligibilityList.length > 0 ? 
+                                eligibilityList.map(item => `
+                                    <li class="eligibility-item">
+                                        <i class="fas fa-check-circle"></i>
+                                        <span>${item}</span>
+                                    </li>
+                                `).join('') : 
+                                '<li class="eligibility-item"><i class="fas fa-check-circle"></i> No specific eligibility criteria</li>'
+                            }
+                        </ul>
+                    </div>
+                    <div class="steps-section">
+                        <h4 class="section-title">Application Steps</h4>
+                        <ol class="steps-list">
+                            ${stepsList.map(step => `<li>${step}</li>`).join('')}
+                        </ol>
+                    </div>
+                    <div class="scheme-footer">
                         <a href="${scheme.link}" target="_blank" class="apply-btn">
                             <i class="fas fa-external-link-alt"></i>
                             Apply Now
                         </a>
-                        <span class="scheme-deadline">Deadline: ${scheme.deadline}</span>
+                        <span class="deadline">Deadline: ${scheme.deadline}</span>
                     </div>
                 `;
                 
-                return schemeCard;
+                return card;
             }
 
-            // Set up event listeners
-            function setupEventListeners() {
-                // Send message on button click
-                sendBtn.addEventListener('click', sendMessage);
-                
-                // Send message on Enter key
-                userInput.addEventListener('keypress', function(e) {
-                    if (e.key === 'Enter') {
-                        sendMessage();
-                    }
+            // Filter button event listeners
+            filterButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    filterButtons.forEach(btn => btn.classList.remove('active'));
+                    this.classList.add('active');
+                    const filter = this.dataset.filter;
+                    renderSchemes(filter);
                 });
-                
-                // Quick reply buttons
-                document.addEventListener('click', function(e) {
-                    if (e.target.classList.contains('quick-reply')) {
-                        const message = e.target.textContent;
-                        addUserMessage(message);
-                        simulateBotResponse(message);
-                    }
-                });
-                
-                // Filter buttons
-                filterButtons.forEach(button => {
-                    button.addEventListener('click', function() {
-                        filterButtons.forEach(btn => btn.classList.remove('active'));
-                        this.classList.add('active');
-                        const filter = this.dataset.filter;
-                        renderSchemes(filter);
-                    });
-                });
-            }
+            });
 
-            // Add user message to chat
-            function addUserMessage(message) {
-                const messageDiv = document.createElement('div');
-                messageDiv.className = 'message user-message';
-                messageDiv.innerHTML = `<p>${message}</p>`;
-                chatMessages.appendChild(messageDiv);
-                userInput.value = '';
-                scrollToBottom();
-            }
+            // Initial render
+            renderSchemes('all');
 
-            // Add bot message to chat
-            function addBotMessage(message) {
-                const messageDiv = document.createElement('div');
-                messageDiv.className = 'message bot-message';
-                
-                // Format message with line breaks and lists
-                let formattedMessage = message.replace(/\n/g, '<br>');
-                formattedMessage = formattedMessage.replace(/\*(.*?)\*/g, '<strong>$1</strong>');
-                formattedMessage = formattedMessage.replace(/_(.*?)_/g, '<em>$1</em>');
-                
-                messageDiv.innerHTML = `<p>${formattedMessage}</p>`;
-                chatMessages.appendChild(messageDiv);
-                scrollToBottom();
-            }
-
-            // Add quick reply buttons
-            function addQuickReplies(replies) {
-                const quickRepliesDiv = document.createElement('div');
-                quickRepliesDiv.className = 'quick-replies';
-                
-                replies.forEach(reply => {
-                    const button = document.createElement('button');
-                    button.className = 'quick-reply';
-                    button.textContent = reply.title;
-                    button.dataset.payload = reply.payload || reply.title;
-                    quickRepliesDiv.appendChild(button);
-                });
-                
-                const lastMessage = chatMessages.lastChild;
-                lastMessage.appendChild(quickRepliesDiv);
-                scrollToBottom();
-            }
-
-            // Send message to backend (simulated)
-            function sendMessage() {
-                const message = userInput.value.trim();
-                if (message === '') return;
-                
-                addUserMessage(message);
-                simulateBotResponse(message);
-            }
-
-            // Simulate bot response (in a real app, this would be an API call)
-            function simulateBotResponse(message) {
-                // Show typing indicator
-                const typingIndicator = document.createElement('div');
-                typingIndicator.className = 'message bot-message';
-                typingIndicator.innerHTML = '<p><i class="fas fa-ellipsis-h"></i></p>';
-                chatMessages.appendChild(typingIndicator);
-                scrollToBottom();
-                
-                // Simulate API delay
-                setTimeout(() => {
-                    // Remove typing indicator
-                    chatMessages.removeChild(typingIndicator);
-                    
-                    // Generate response based on user input
-                    let response;
-                    let quickReplies = [];
-                    
-                    if (message.toLowerCase().includes('browse') || message.toLowerCase().includes('scheme')) {
-                        response = "📋 Here are the scheme categories you can browse:";
-                        quickReplies = [
-                            { title: "🇮🇳 Central Schemes", payload: "central" },
-                            { title: "🏛️ TN State Schemes", payload: "tn" },
-                            { title: "🌐 All Schemes", payload: "all" }
-                        ];
-                    } else if (message.toLowerCase().includes('eligibility') || message.toLowerCase().includes('qualify')) {
-                        response = "📝 *Let's check your eligibility*\n\nWhat is your age in years?";
-                        quickReplies = [
-                            { title: "👶 Under 18", payload: "17" },
-                            { title: "👦 18-30", payload: "25" },
-                            { title: "👨 31-45", payload: "38" },
-                            { title: "👴 46-60", payload: "53" },
-                            { title: "🧓 60+", payload: "65" }
-                        ];
-                    } else if (message === 'central' || message === 'tn' || message === 'all') {
-                        const schemeType = message === 'central' ? 'Central Government' : 
-                                          message === 'tn' ? 'Tamil Nadu State' : 'All';
-                        response = `📋 *${schemeType} Schemes*\n\nHere are some schemes you might be interested in:`;
-                        
-                        const schemesToShow = message === 'all' ? schemes : 
-                                             message === 'central' ? schemes.filter(s => !s.eligibility.state) : 
-                                             schemes.filter(s => s.eligibility.state === "Tamil Nadu");
-                        
-                        schemesToShow.slice(0, 3).forEach(scheme => {
-                            response += `\n\n🔹 *${scheme.name}*\n   - Category: ${scheme.category}\n   - Benefits: ${scheme.benefits}`;
-                        });
-                        
-                        quickReplies = [
-                            { title: "🔍 See More", payload: `more_${message}` },
-                            { title: "✅ Check Eligibility", payload: "eligibility" },
-                            { title: "🏠 Main Menu", payload: "menu" }
-                        ];
-                    } else {
-                        response = "I'm here to help you discover government schemes you may qualify for. How can I assist you today?";
-                        quickReplies = [
-                            { title: "🔍 Browse Schemes", payload: "browse" },
-                            { title: "✅ Check Eligibility", payload: "eligibility" },
-                            { title: "ℹ️ Get Help", payload: "help" }
-                        ];
-                    }
-                    
-                    addBotMessage(response);
-                    if (quickReplies.length > 0) {
-                        addQuickReplies(quickReplies);
-                    }
-                }, 1000);
-            }
-
-            // Scroll chat to bottom
-            function scrollToBottom() {
-                chatMessages.scrollTop = chatMessages.scrollHeight;
-            }
-
-            // Initialize the app
-            init();
+            // Animation for spinner
+            const style = document.createElement('style');
+            style.innerHTML = `
+                @keyframes spin {
+                    to { transform: rotate(360deg); }
+                }
+            `;
+            document.head.appendChild(style);
         });
     </script>
 </body>
