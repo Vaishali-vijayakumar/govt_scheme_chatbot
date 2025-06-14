@@ -1,229 +1,613 @@
-document.addEventListener('DOMContentLoaded', function() {
-    const chatWindow = document.getElementById('chatWindow');
-    const userInput = document.getElementById('userInput');
-    const sendButton = document.getElementById('sendButton');
-    const voiceButton = document.getElementById('voiceButton');
-    const typingIndicator = document.getElementById('typingIndicator');
-    const schemePreview = document.getElementById('schemePreview');
-    const closePreview = document.getElementById('closePreview');
-    const schemeTitle = document.getElementById('schemeTitle');
-    const schemeDetails = document.getElementById('schemeDetails');
-    const applyLink = document.getElementById('applyLink');
-    
-    let senderId = localStorage.getItem('senderId') || generateUUID();
-    localStorage.setItem('senderId', senderId);
-    
-    // Initialize speech recognition if available
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    let recognition;
-    
-    if (SpeechRecognition) {
-        recognition = new SpeechRecognition();
-        recognition.continuous = false;
-        recognition.interimResults = false;
-        
-        recognition.onresult = function(event) {
-            const transcript = event.results[0][0].transcript;
-            userInput.value = transcript;
-            sendMessage();
-        };
-        
-        recognition.onerror = function(event) {
-            console.error('Speech recognition error', event.error);
-            addBotMessage("Sorry, I couldn't understand your voice. Please try typing instead.");
-        };
-    } else {
-        voiceButton.style.display = 'none';
-    }
-    
-    // Event listeners
-    sendButton.addEventListener('click', sendMessage);
-    userInput.addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') sendMessage();
-    });
-    
-    voiceButton.addEventListener('click', toggleVoiceInput);
-    closePreview.addEventListener('click', closeSchemePreview);
-    
-    // Quick reply buttons
-    document.addEventListener('click', function(e) {
-        if (e.target.classList.contains('quick-reply')) {
-            const payload = e.target.getAttribute('data-payload');
-            if (payload.startsWith('details_')) {
-                const schemeName = payload.replace('details_', '');
-                showSchemeDetails(schemeName);
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GovScheme AI Assistant</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #4361ee;
+            --secondary-color: #3f37c9;
+            --accent-color: #4cc9f0;
+            --dark-color: #1a1a2e;
+            --light-color: #f8f9fa;
+            --success-color: #4caf50;
+            --warning-color: #ff9800;
+            --error-color: #f44336;
+            --border-radius: 12px;
+            --box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f5f7fa;
+            color: var(--dark-color);
+            line-height: 1.6;
+        }
+
+        .app-container {
+            max-width: 800px;
+            margin: 0 auto;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background-color: white;
+            box-shadow: var(--box-shadow);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .app-header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 1rem;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo i {
+            font-size: 1.5rem;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.9rem;
+        }
+
+        .pulse {
+            width: 10px;
+            height: 10px;
+            background-color: var(--success-color);
+            border-radius: 50%;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(0.95); opacity: 0.7; }
+            70% { transform: scale(1.1); opacity: 1; }
+            100% { transform: scale(0.95); opacity: 0.7; }
+        }
+
+        .chat-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 1rem;
+            overflow: hidden;
+        }
+
+        .chat-window {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+            scroll-behavior: smooth;
+        }
+
+        .welcome-message {
+            margin-bottom: 1rem;
+        }
+
+        .bot-message, .user-message {
+            display: flex;
+            margin-bottom: 1.5rem;
+            max-width: 80%;
+        }
+
+        .bot-message {
+            align-self: flex-start;
+        }
+
+        .user-message {
+            align-self: flex-end;
+            flex-direction: row-reverse;
+        }
+
+        .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: var(--primary-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            flex-shrink: 0;
+        }
+
+        .user-message .avatar {
+            background-color: var(--accent-color);
+            margin-right: 0;
+            margin-left: 10px;
+        }
+
+        .message-content {
+            padding: 12px 16px;
+            border-radius: var(--border-radius);
+            background-color: #f1f3f8;
+            position: relative;
+        }
+
+        .user-message .message-content {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .message-content p {
+            margin-bottom: 0.5rem;
+        }
+
+        .quick-replies {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .quick-reply {
+            background-color: white;
+            border: 1px solid var(--primary-color);
+            color: var(--primary-color);
+            border-radius: 20px;
+            padding: 6px 12px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .quick-reply:hover {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .input-container {
+            display: flex;
+            align-items: center;
+            padding: 1rem;
+            background-color: white;
+            border-top: 1px solid #eee;
+            position: relative;
+        }
+
+        #userInput {
+            flex: 1;
+            padding: 12px 16px;
+            border: 1px solid #ddd;
+            border-radius: var(--border-radius);
+            outline: none;
+            font-size: 1rem;
+            transition: border 0.3s;
+        }
+
+        #userInput:focus {
+            border-color: var(--primary-color);
+        }
+
+        #sendButton, #voiceButton {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: none;
+            background-color: var(--primary-color);
+            color: white;
+            margin-left: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.2s;
+        }
+
+        #sendButton:hover, #voiceButton:hover {
+            background-color: var(--secondary-color);
+        }
+
+        .typing-indicator {
+            position: absolute;
+            left: 20px;
+            top: -25px;
+            display: none;
+        }
+
+        .typing-indicator span {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background-color: var(--primary-color);
+            border-radius: 50%;
+            margin-right: 3px;
+            animation: bounce 1.5s infinite ease-in-out;
+        }
+
+        .typing-indicator span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-indicator span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes bounce {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-5px); }
+        }
+
+        .scheme-preview {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 350px;
+            height: 100%;
+            background-color: white;
+            box-shadow: -5px 0 15px rgba(0, 0, 0, 0.1);
+            padding: 1.5rem;
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+            z-index: 100;
+            overflow-y: auto;
+        }
+
+        .scheme-preview.active {
+            transform: translateX(0);
+        }
+
+        .close-preview {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: none;
+            border: none;
+            font-size: 1.2rem;
+            cursor: pointer;
+            color: #666;
+        }
+
+        .scheme-details {
+            margin: 1rem 0;
+        }
+
+        .scheme-details p {
+            margin-bottom: 0.8rem;
+        }
+
+        .scheme-details ul {
+            padding-left: 1.2rem;
+            margin-bottom: 1rem;
+        }
+
+        .scheme-details li {
+            margin-bottom: 0.5rem;
+        }
+
+        .apply-button {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: var(--primary-color);
+            color: white;
+            text-decoration: none;
+            border-radius: var(--border-radius);
+            text-align: center;
+            transition: background-color 0.2s;
+        }
+
+        .apply-button:hover {
+            background-color: var(--secondary-color);
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .app-container {
+                height: 100vh;
+                max-width: 100%;
+            }
+            
+            .scheme-preview {
+                width: 100%;
+            }
+            
+            .bot-message, .user-message {
+                max-width: 90%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <header class="app-header">
+            <div class="header-content">
+                <div class="logo">
+                    <i class="fas fa-robot"></i>
+                    <h1>GovScheme AI</h1>
+                </div>
+                <div class="status-indicator">
+                    <span class="pulse"></span>
+                    <span>Online</span>
+                </div>
+            </div>
+        </header>
+
+        <main class="chat-container">
+            <div class="chat-window" id="chatWindow">
+                <div class="welcome-message">
+                    <div class="bot-message">
+                        <div class="avatar">
+                            <i class="fas fa-robot"></i>
+                        </div>
+                        <div class="message-content">
+                            <p>Welcome to Government Scheme AI Assistant! I can help you discover benefits you may qualify for.</p>
+                            <div class="quick-replies">
+                                <button class="quick-reply" data-payload="eligibility">Check Eligibility</button>
+                                <button class="quick-reply" data-payload="browse">Browse Schemes</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="input-container">
+                <div class="typing-indicator" id="typingIndicator">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+                <input type="text" id="userInput" placeholder="Type your message..." autocomplete="off">
+                <button id="sendButton"><i class="fas fa-paper-plane"></i></button>
+                <button id="voiceButton"><i class="fas fa-microphone"></i></button>
+            </div>
+        </main>
+
+        <div class="scheme-preview" id="schemePreview">
+            <button class="close-preview" id="closePreview"><i class="fas fa-times"></i></button>
+            <h3 id="schemeTitle"></h3>
+            <div class="scheme-details" id="schemeDetails"></div>
+            <a href="#" target="_blank" class="apply-button" id="applyLink">Apply Now</a>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const chatWindow = document.getElementById('chatWindow');
+            const userInput = document.getElementById('userInput');
+            const sendButton = document.getElementById('sendButton');
+            const voiceButton = document.getElementById('voiceButton');
+            const typingIndicator = document.getElementById('typingIndicator');
+            const schemePreview = document.getElementById('schemePreview');
+            const closePreview = document.getElementById('closePreview');
+            const schemeTitle = document.getElementById('schemeTitle');
+            const schemeDetails = document.getElementById('schemeDetails');
+            const applyLink = document.getElementById('applyLink');
+            
+            let senderId = localStorage.getItem('senderId') || generateUUID();
+            localStorage.setItem('senderId', senderId);
+            
+            // Initialize speech recognition if available
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            let recognition;
+            
+            if (SpeechRecognition) {
+                recognition = new SpeechRecognition();
+                recognition.continuous = false;
+                recognition.interimResults = false;
+                
+                recognition.onresult = function(event) {
+                    const transcript = event.results[0][0].transcript;
+                    userInput.value = transcript;
+                    sendMessage();
+                };
+                
+                recognition.onerror = function(event) {
+                    console.error('Speech recognition error', event.error);
+                    addBotMessage("Sorry, I couldn't understand your voice. Please try typing instead.");
+                };
             } else {
-                addUserMessage(e.target.textContent);
-                simulateTyping(() => {
-                    sendToBackend(e.target.textContent, payload);
+                voiceButton.style.display = 'none';
+            }
+            
+            // Event listeners
+            sendButton.addEventListener('click', sendMessage);
+            userInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') sendMessage();
+            });
+            
+            voiceButton.addEventListener('click', toggleVoiceInput);
+            closePreview.addEventListener('click', closeSchemePreview);
+            
+            // Quick reply buttons
+            document.addEventListener('click', function(e) {
+                if (e.target.classList.contains('quick-reply')) {
+                    const payload = e.target.getAttribute('data-payload');
+                    const displayText = e.target.textContent;
+                    
+                    addUserMessage(displayText);
+                    
+                    simulateTyping(() => {
+                        if (payload.startsWith('details_')) {
+                            const schemeName = payload.replace('details_', '');
+                            showSchemeDetails(schemeName);
+                        } else {
+                            // Send the payload value instead of display text
+                            sendToBackend(payload, payload);
+                        }
+                    });
+                }
+            });
+            
+            function generateUUID() {
+                return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                    const r = Math.random() * 16 | 0;
+                    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+                    return v.toString(16);
                 });
             }
-        }
-    });
-    
-    function generateUUID() {
-        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-            const r = Math.random() * 16 | 0;
-            const v = c === 'x' ? r : (r & 0x3 | 0x8);
-            return v.toString(16);
-        });
-    }
-    
-    function addUserMessage(message) {
-        const messageDiv = document.createElement('div');
-        messageDiv.className = 'user-message';
-        messageDiv.innerHTML = `
-            <div class="avatar">
-                <i class="fas fa-user"></i>
-            </div>
-            <div class="message-content">
-                <p>${message}</p>
-            </div>
-        `;
-        chatWindow.appendChild(messageDiv);
-        scrollToBottom();
-    }
-    
-    function addBotMessage(message, quickReplies = [], buttons = []) {
-        const messageDiv = document.createElement('div');
-        messageDiv.className = 'bot-message';
-        
-        let quickRepliesHTML = '';
-        if (quickReplies.length > 0) {
-            quickRepliesHTML = '<div class="quick-replies">' + 
-                quickReplies.map(reply => 
-                    `<button class="quick-reply" data-payload="${reply.payload || reply.title.toLowerCase()}">${reply.title}</button>`
-                ).join('') + 
-                '</div>';
-        }
-        
-        messageDiv.innerHTML = `
-            <div class="avatar">
-                <i class="fas fa-robot"></i>
-            </div>
-            <div class="message-content">
-                <p>${message}</p>
-                ${quickRepliesHTML}
-            </div>
-        `;
-        
-        chatWindow.appendChild(messageDiv);
-        scrollToBottom();
-    }
-    
-    function simulateTyping(callback) {
-        typingIndicator.style.display = 'block';
-        scrollToBottom();
-        
-        setTimeout(() => {
-            typingIndicator.style.display = 'none';
-            callback();
-        }, 1500);
-    }
-    
-    function scrollToBottom() {
-        chatWindow.scrollTop = chatWindow.scrollHeight;
-    }
-    
-    function sendMessage() {
-        const message = userInput.value.trim();
-        if (message) {
-            addUserMessage(message);
-            userInput.value = '';
             
-            simulateTyping(() => {
-                sendToBackend(message);
-            });
-        }
-    }
-    
-    function toggleVoiceInput() {
-        if (recognition) {
-            voiceButton.classList.toggle('active');
-            if (voiceButton.classList.contains('active')) {
-                recognition.start();
-                voiceButton.innerHTML = '<i class="fas fa-microphone-slash"></i>';
-            } else {
-                recognition.stop();
-                voiceButton.innerHTML = '<i class="fas fa-microphone"></i>';
+            function addUserMessage(message) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'user-message';
+                messageDiv.innerHTML = `
+                    <div class="avatar">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div class="message-content">
+                        <p>${message}</p>
+                    </div>
+                `;
+                chatWindow.appendChild(messageDiv);
+                scrollToBottom();
             }
-        }
-    }
-    
-    function sendToBackend(message, payload = null) {
-        fetch('/api/chat', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                message: message,
-                sender: senderId,
-                payload: payload
-            })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.text) {
-                addBotMessage(data.text, data.quick_replies, data.buttons);
+            
+            function addBotMessage(message, quickReplies = [], buttons = []) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'bot-message';
+                
+                let quickRepliesHTML = '';
+                if (quickReplies.length > 0) {
+                    quickRepliesHTML = '<div class="quick-replies">' + 
+                        quickReplies.map(reply => 
+                            `<button class="quick-reply" data-payload="${reply.payload || reply.title.toLowerCase()}">${reply.title}</button>`
+                        ).join('') + 
+                        '</div>';
+                }
+                
+                messageDiv.innerHTML = `
+                    <div class="avatar">
+                        <i class="fas fa-robot"></i>
+                    </div>
+                    <div class="message-content">
+                        <p>${message}</p>
+                        ${quickRepliesHTML}
+                    </div>
+                `;
+                
+                chatWindow.appendChild(messageDiv);
+                scrollToBottom();
             }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            addBotMessage("Sorry, I'm having trouble connecting. Please try again later.");
+            
+            function simulateTyping(callback) {
+                typingIndicator.style.display = 'block';
+                scrollToBottom();
+                
+                setTimeout(() => {
+                    typingIndicator.style.display = 'none';
+                    callback();
+                }, 1500);
+            }
+            
+            function scrollToBottom() {
+                chatWindow.scrollTop = chatWindow.scrollHeight;
+            }
+            
+            function sendMessage() {
+                const message = userInput.value.trim();
+                if (message) {
+                    addUserMessage(message);
+                    userInput.value = '';
+                    
+                    simulateTyping(() => {
+                        sendToBackend(message);
+                    });
+                }
+            }
+            
+            function toggleVoiceInput() {
+                if (recognition) {
+                    voiceButton.classList.toggle('active');
+                    if (voiceButton.classList.contains('active')) {
+                        recognition.start();
+                        voiceButton.innerHTML = '<i class="fas fa-microphone-slash"></i>';
+                    } else {
+                        recognition.stop();
+                        voiceButton.innerHTML = '<i class="fas fa-microphone"></i>';
+                    }
+                }
+            }
+            
+            function sendToBackend(message, payload = null) {
+                fetch('/api/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        message: message,
+                        sender: senderId,
+                        payload: payload
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.text) {
+                        addBotMessage(data.text, data.quick_replies, data.buttons);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    addBotMessage("Sorry, I'm having trouble connecting. Please try again later.");
+                });
+            }
+            
+            function showSchemeDetails(schemeName) {
+                fetch(`/api/schemes?type=all`)
+                    .then(response => response.json())
+                    .then(data => {
+                        const schemeData = data.schemes.find(scheme => scheme.name === schemeName);
+                        if (schemeData) {
+                            schemeTitle.textContent = schemeName;
+                            schemeDetails.innerHTML = `
+                                <p><strong>Category:</strong> ${schemeData.category}</p>
+                                <p><strong>Benefits:</strong> ${schemeData.benefits}</p>
+                                <p><strong>Deadline:</strong> ${schemeData.deadline}</p>
+                                <p><strong>Eligibility:</strong></p>
+                                <ul>
+                                    ${schemeData.eligibility.min_age ? `<li>Minimum age: ${schemeData.eligibility.min_age}</li>` : ''}
+                                    ${schemeData.eligibility.income_max ? `<li>Maximum income: ₹${schemeData.eligibility.income_max.toLocaleString()}</li>` : ''}
+                                    ${schemeData.eligibility.occupation ? `<li>Occupation: ${Array.isArray(schemeData.eligibility.occupation) ? schemeData.eligibility.occupation.join(', ') : schemeData.eligibility.occupation}</li>` : ''}
+                                </ul>
+                                <p><strong>Application Steps:</strong></p>
+                                <p>${schemeData.steps.replace(/\n/g, '<br>')}</p>
+                            `;
+                            applyLink.href = schemeData.link;
+                            schemePreview.classList.add('active');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error fetching scheme details:', error);
+                        addBotMessage("Sorry, I couldn't retrieve the scheme details. Please try again later.");
+                    });
+            }
+            
+            function closeSchemePreview() {
+                schemePreview.classList.remove('active');
+            }
+            
+            // Load any previous messages from session
+            function loadPreviousMessages() {
+                // In a real app, you might fetch previous messages from your backend
+                // using the senderId to maintain conversation history
+            }
+            
+            loadPreviousMessages();
         });
-    }
-    
-    function showSchemeDetails(schemeName) {
-        // In a real app, you might fetch this from your backend
-        const schemeData = {
-            "PM-KISAN": {
-                "category": "Agriculture",
-                "steps": "1. Visit https://pmkisan.gov.in\n2. Click 'Farmers Corner' > 'New Farmer Registration'\n3. Submit Aadhaar, bank & land details",
-                "eligibility": {"min_age": 18, "occupation": ["farmer"], "income_max": null},
-                "benefits": "₹6,000/year in 3 installments",
-                "deadline": "Ongoing",
-                "link": "https://pmkisan.gov.in"
-            },
-            "PM-AWAS-YOJANA": {
-                "category": "Housing",
-                "steps": "1. Contact local municipal office\n2. Submit proof of residence and income\n3. Get approval and subsidy",
-                "eligibility": {"min_age": 21, "occupation": null, "income_max": 180000},
-                "benefits": "Housing subsidy up to ₹2.67 lakh",
-                "deadline": "31-12-2024",
-                "link": "https://pmaymis.gov.in"
-            }
-        }[schemeName];
-        
-        if (schemeData) {
-            schemeTitle.textContent = schemeName;
-            schemeDetails.innerHTML = `
-                <p><strong>Category:</strong> ${schemeData.category}</p>
-                <p><strong>Benefits:</strong> ${schemeData.benefits}</p>
-                <p><strong>Deadline:</strong> ${schemeData.deadline}</p>
-                <p><strong>Eligibility:</strong></p>
-                <ul>
-                    ${schemeData.eligibility.min_age ? `<li>Minimum age: ${schemeData.eligibility.min_age}</li>` : ''}
-                    ${schemeData.eligibility.income_max ? `<li>Maximum income: ₹${schemeData.eligibility.income_max.toLocaleString()}</li>` : ''}
-                    ${schemeData.eligibility.occupation ? `<li>Occupation: ${Array.isArray(schemeData.eligibility.occupation) ? schemeData.eligibility.occupation.join(', ') : schemeData.eligibility.occupation}</li>` : ''}
-                </ul>
-                <p><strong>Application Steps:</strong></p>
-                <p>${schemeData.steps.replace(/\n/g, '<br>')}</p>
-            `;
-            applyLink.href = schemeData.link;
-            schemePreview.classList.add('active');
-        }
-    }
-    
-    function closeSchemePreview() {
-        schemePreview.classList.remove('active');
-    }
-    
-    // Load any previous messages from session
-    function loadPreviousMessages() {
-        // In a real app, you might fetch previous messages from your backend
-        // using the senderId to maintain conversation history
-    }
-    
-    loadPreviousMessages();
-});
+    </script>
+</body>
+</html>
