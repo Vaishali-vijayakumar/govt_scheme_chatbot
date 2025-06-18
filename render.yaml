@@ -1,14 +1,26 @@
+# render.yaml - For deploying backend to Render.com
 services:
   - type: web
-    name: govscheme-chatbot
+    name: myscheme-backend
     runtime: python
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn app:app
+    env: python
+    python:
+      version: 3.9
     envVars:
-      - key: SECRET_KEY
+      - key: MONGODB_URI
+        value: ${MONGODB_URI}
+      - key: JWT_SECRET
         generateValue: true
-      - key: OPENAI_API_KEY
-        required: false  # Only if using AI features
       - key: PYTHON_VERSION
-        value: 3.9.13
-    healthCheckPath: /health
+        value: 3.9.16
+    healthCheckPath: /api/health
+    plan: free
+
+databases:
+  - name: myscheme-db
+    databaseName: myscheme
+    user: myscheme_user
+    plan: free
+    type: mongodb
