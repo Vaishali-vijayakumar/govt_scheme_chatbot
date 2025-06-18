@@ -1,26 +1,31 @@
-# render.yaml - For deploying backend to Render.com
 services:
   - type: web
     name: myscheme-backend
     runtime: python
-    buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn app:app
-    env: python
-    python:
-      version: 3.9
+    pythonVersion: "3.9.16"
+    buildCommand: |
+      pip install -r requirements.txt
+    startCommand: |
+      python -m gunicorn --bind 0.0.0.0:$PORT --workers 4 --timeout 120 app:app
     envVars:
       - key: MONGODB_URI
-        value: ${MONGODB_URI}
+        fromDatabase:
+          name: myscheme-db
+          property: connectionString
       - key: JWT_SECRET
         generateValue: true
-      - key: PYTHON_VERSION
-        value: 3.9.16
+      - key: UPLOAD_FOLDER
+        value: "/var/data/uploads"
     healthCheckPath: /api/health
     plan: free
+    disk:
+      name: uploads
+      mountPath: /var/data/uploads
+      sizeGB: 1
 
 databases:
   - name: myscheme-db
     databaseName: myscheme
-    user: myscheme_user
+    user: myscheme_admin
     plan: free
     type: mongodb
